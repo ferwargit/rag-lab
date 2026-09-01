@@ -1,6 +1,8 @@
 from pathlib import Path
 
 from rag_lab.chunking import chunk_text
+from rag_lab.embeddings import LocalEmbeddingClient
+from rag_lab.indexing import embed_chunks
 
 
 def main() -> None:
@@ -19,17 +21,23 @@ def main() -> None:
         overlap=40,
     )
 
+    client = LocalEmbeddingClient()
+
+    embedded_chunks = embed_chunks(
+        chunks,
+        client,
+    )
+
     print(f"Documento: {path}")
-    print(f"Caracteres: {len(text)}")
-    print(f"Chunks: {len(chunks)}")
+    print(f"Chunks: {len(embedded_chunks)}")
     print()
 
-    for chunk in chunks:
+    for chunk in embedded_chunks:
         print("=" * 70)
         print(f"ID: {chunk.id}")
-        print(f"INDEX: {chunk.index}")
         print(f"SOURCE: {chunk.source}")
-        print(f"METADATA: {chunk.metadata}")
+        print(f"DIMENSIONS: {len(chunk.embedding)}")
+        print(f"FIRST 5 VALUES: {chunk.embedding[:5]}")
         print("=" * 70)
         print(chunk.text)
         print()

@@ -10,15 +10,3 @@ class DocumentChunk:
     source: str
     index: int
     metadata: dict[str, str] = field(default_factory=dict)
-
-
-@dataclass(frozen=True)
-class EmbeddedChunk:
-    """Representa un chunk junto con su embedding."""
-
-    id: str
-    text: str
-    source: str
-    index: int
-    embedding: tuple[float, ...]
-    metadata: dict[str, str] = field(default_factory=dict)
