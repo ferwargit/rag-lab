@@ -3,44 +3,44 @@ from pathlib import Path
 from rag_lab.chunking import chunk_text
 from rag_lab.embeddings import LocalEmbeddingClient
 from rag_lab.indexing import embed_chunks
+from rag_lab.vector_store import JsonVectorStore
 
 
 def main() -> None:
-    path = Path("data/knowledge.txt")
+    document_path = Path("data/knowledge.txt")
+    index_path = Path("storage/index.json")
 
-    if not path.exists():
-        raise FileNotFoundError(f"No existe el archivo: {path}")
+    if not document_path.exists():
+        raise FileNotFoundError(
+            f"No existe el documento: {document_path}"
+        )
 
-    text = path.read_text(encoding="utf-8")
+    text = document_path.read_text(encoding="utf-8")
 
     chunks = chunk_text(
         text,
-        source=str(path),
+        source=str(document_path),
         document_id="knowledge",
         max_chars=200,
         overlap=40,
     )
 
-    client = LocalEmbeddingClient()
+    embedding_client = LocalEmbeddingClient()
 
     embedded_chunks = embed_chunks(
         chunks,
-        client,
+        embedding_client,
     )
 
-    print(f"Documento: {path}")
-    print(f"Chunks: {len(embedded_chunks)}")
-    print()
+    store = JsonVectorStore(index_path)
 
-    for chunk in embedded_chunks:
-        print("=" * 70)
-        print(f"ID: {chunk.id}")
-        print(f"SOURCE: {chunk.source}")
-        print(f"DIMENSIONS: {len(chunk.embedding)}")
-        print(f"FIRST 5 VALUES: {chunk.embedding[:5]}")
-        print("=" * 70)
-        print(chunk.text)
-        print()
+    store.add_many(embedded_chunks)
+    store.save()
+
+    print(f"Documento: {document_path}")
+    print(f"Chunks indexados: {store.count()}")
+    print(f"Dimensiones: {store.dimension}")
+    print(f"Índice: {index_path}")
 
 
 if __name__ == "__main__":
