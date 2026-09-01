@@ -1,20 +1,16 @@
 from pathlib import Path
 
-from rag_lab.models import DocumentChunk
-
 
 def chunk_text(
     text: str,
-    *,
-    source: str,
-    document_id: str,
     max_chars: int = 200,
     overlap: int = 40,
-) -> list[DocumentChunk]:
+) -> list[str]:
     """
-    Divide un documento en chunks respetando límites de párrafo.
+    Divide un texto respetando límites de párrafo.
 
-    Cada chunk conserva su identidad y procedencia.
+    Los párrafos se agrupan hasta aproximarse a max_chars.
+    Se utiliza overlap para conservar contexto entre chunks.
     """
 
     if max_chars <= 0:
@@ -32,28 +28,18 @@ def chunk_text(
         if paragraph.strip()
     ]
 
-    chunks: list[DocumentChunk] = []
+    chunks: list[str] = []
     current: list[str] = []
     current_length = 0
 
     for paragraph in paragraphs:
         paragraph_length = len(paragraph)
 
-        if current and current_length + 1 + paragraph_length > max_chars:
-            chunk_index = len(chunks)
-
-            chunks.append(
-                DocumentChunk(
-                    id=f"{document_id}-{chunk_index:03d}",
-                    text="\n".join(current),
-                    source=source,
-                    index=chunk_index,
-                    metadata={
-                        "type": "text",
-                        "language": "es",
-                    },
-                )
-            )
+        if (
+            current
+            and current_length + 1 + paragraph_length > max_chars
+        ):
+            chunks.append("\n".join(current))
 
             overlap_text = current[-1]
 
@@ -72,20 +58,7 @@ def chunk_text(
         )
 
     if current:
-        chunk_index = len(chunks)
-
-        chunks.append(
-            DocumentChunk(
-                id=f"{document_id}-{chunk_index:03d}",
-                text="\n".join(current),
-                source=source,
-                index=chunk_index,
-                metadata={
-                    "type": "text",
-                    "language": "es",
-                },
-            )
-        )
+        chunks.append("\n".join(current))
 
     return chunks
 
@@ -100,8 +73,6 @@ def main() -> None:
 
     chunks = chunk_text(
         text,
-        source=str(path),
-        document_id="knowledge",
         max_chars=200,
         overlap=40,
     )
@@ -111,14 +82,11 @@ def main() -> None:
     print(f"Chunks: {len(chunks)}")
     print()
 
-    for chunk in chunks:
+    for index, chunk in enumerate(chunks):
         print("=" * 70)
-        print(f"ID: {chunk.id}")
-        print(f"INDEX: {chunk.index}")
-        print(f"SOURCE: {chunk.source}")
-        print(f"METADATA: {chunk.metadata}")
+        print(f"CHUNK {index}")
         print("=" * 70)
-        print(chunk.text)
+        print(chunk)
         print()
 
 
