@@ -1,0 +1,9 @@
+MIDI Laboratory es una aplicación personal desarrollada con Electron.
+La aplicación recibe eventos MIDI provenientes de un piano digital.
+El dispositivo MIDI se conecta al ordenador mediante una interfaz USB MIDI.
+El proceso principal de Electron administra parte de la comunicación con el hardware.
+La interfaz de usuario se ejecuta en el proceso renderer.
+El sistema utiliza ejercicios de reconocimiento de notas musicales.
+El objetivo de la aplicación es adaptar progresivamente los ejercicios al usuario.
+La información relacionada con MIDI debe mantenerse separada de la lógica visual siempre que sea posible.
+La aplicación se encuentra en desarrollo y su arquitectura puede evolucionar con el tiempo.
