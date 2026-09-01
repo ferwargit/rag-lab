@@ -39,15 +39,12 @@ def main() -> None:
     retriever = Retriever(store)
 
     top_k = 3
-    score_threshold = 0.80
 
     total_with_expected = 0
     successful_retrievals = 0
 
     print("RETRIEVAL BENCHMARK")
     print("=" * 70)
-    print(f"Top-K: {top_k}")
-    print(f"Score threshold: {score_threshold}")
     print()
 
     for case in benchmark:
@@ -60,9 +57,8 @@ def main() -> None:
         query_embedding = embedding_client.embed(query)
 
         results = retriever.search(
-        tuple(query_embedding),
-        top_k=top_k,
-        score_threshold=score_threshold,
+            tuple(query_embedding),
+            top_k=top_k,
         )
 
         retrieved_ids = [

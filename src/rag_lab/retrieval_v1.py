@@ -50,22 +50,11 @@ class Retriever:
         query_embedding: tuple[float, ...],
         *,
         top_k: int = 3,
-        score_threshold: float | None = None,
     ) -> list[SearchResult]:
-        """
-        Devuelve los chunks más similares.
-
-        Si score_threshold está definido, se descartan
-        resultados cuyo score sea inferior al mínimo.
-        """
+        """Devuelve los chunks más similares."""
 
         if top_k <= 0:
             raise ValueError("top_k debe ser mayor que 0.")
-
-        if score_threshold is not None and not 0 <= score_threshold <= 1:
-            raise ValueError(
-                "score_threshold debe estar entre 0 y 1."
-            )
 
         results: list[SearchResult] = []
 
@@ -74,12 +63,6 @@ class Retriever:
                 query_embedding,
                 chunk.embedding,
             )
-
-            if (
-                score_threshold is not None
-                and score < score_threshold
-            ):
-                continue
 
             results.append(
                 SearchResult(
