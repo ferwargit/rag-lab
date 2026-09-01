@@ -15,7 +15,7 @@ def main() -> None:
 
     store.load()
 
-    query = "¿Cómo se conecta el piano al ordenador?"
+    query = "¿Qué sistema operativo utiliza MIDI Laboratory?"
 
     embedding_client = LocalEmbeddingClient()
 

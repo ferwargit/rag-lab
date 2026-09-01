@@ -1,0 +1,22 @@
+[
+  {
+    "id": "q001",
+    "query": "¿Cómo se conecta el piano al ordenador?",
+    "expected_chunk_ids": ["knowledge-001"]
+  },
+  {
+    "id": "q002",
+    "query": "¿Dónde se ejecuta la interfaz de usuario?",
+    "expected_chunk_ids": ["knowledge-002"]
+  },
+  {
+    "id": "q003",
+    "query": "¿Cuál es el objetivo de la aplicación?",
+    "expected_chunk_ids": ["knowledge-003"]
+  },
+  {
+    "id": "q004",
+    "query": "¿Qué sistema operativo utiliza MIDI Laboratory?",
+    "expected_chunk_ids": []
+  }
+]
