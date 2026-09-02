@@ -5,6 +5,9 @@
     "answerable": true,
     "expected_chunk_ids": [
       "knowledge-001"
+    ],
+    "expected_answer_terms": [
+      "interfaz USB MIDI"
     ]
   },
   {
@@ -13,6 +16,9 @@
     "answerable": true,
     "expected_chunk_ids": [
       "knowledge-002"
+    ],
+    "expected_answer_terms": [
+      "proceso renderer"
     ]
   },
   {
@@ -21,12 +27,16 @@
     "answerable": true,
     "expected_chunk_ids": [
       "knowledge-003"
+    ],
+    "expected_answer_terms": [
+      "adaptar progresivamente los ejercicios"
     ]
   },
   {
     "id": "q004",
     "query": "¿Qué sistema operativo utiliza MIDI Laboratory?",
     "answerable": false,
-    "expected_chunk_ids": []
+    "expected_chunk_ids": [],
+    "expected_answer_terms": []
   }
 ]
