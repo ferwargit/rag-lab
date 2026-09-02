@@ -61,3 +61,45 @@ def evaluate_benchmark_case(
         result.answer,
         case.expected_answer_terms,
     )
+
+
+@dataclass(frozen=True)
+class BenchmarkResult:
+    case_id: str
+    answer: str
+    sufficient: bool
+    retrieved_chunk_ids: tuple[str, ...]
+    selected_chunk_ids: tuple[str, ...]
+
+
+def build_benchmark_result(
+    case: BenchmarkCase,
+    result: RAGResult,
+) -> BenchmarkResult:
+    """Convierte un resultado RAG en un resultado de benchmark."""
+
+    return BenchmarkResult(
+        case_id=case.id,
+        answer=result.answer,
+        sufficient=result.sufficient,
+        retrieved_chunk_ids=result.retrieved_chunk_ids,
+        selected_chunk_ids=result.selected_chunk_ids,
+    )
+
+
+from collections.abc import Callable, Sequence
+
+
+def run_benchmark(
+    cases: Sequence[BenchmarkCase],
+    ask: Callable[[str], RAGResult],
+) -> list[BenchmarkResult]:
+    """Ejecuta los casos del benchmark usando una función de consulta."""
+
+    return [
+        build_benchmark_result(
+            case,
+            ask(case.query),
+        )
+        for case in cases
+    ]
