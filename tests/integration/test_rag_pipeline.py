@@ -8,7 +8,10 @@ from rag_lab.generation import LocalChatClient
 from rag_lab.rag_pipeline import ABSTENTION_MESSAGE, RAGPipeline
 from rag_lab.retrieval import Retriever
 from rag_lab.vector_store import JsonVectorStore
-
+from rag_lab.benchmark import (
+    evaluate_benchmark_case,
+    load_benchmark,
+)
 
 INDEX_PATH = Path("storage/index.json")
 
@@ -148,3 +151,40 @@ def test_rag_pipeline_end_to_end_benchmark_queries(
     else:
         assert result.selected_chunk_ids == ()
         assert result.answer == ABSTENTION_MESSAGE
+
+
+BENCHMARK_PATH = Path("data/benchmark.json")
+
+
+@pytest.mark.integration
+def test_rag_pipeline_end_to_end_passes_benchmark() -> None:
+    cases = load_benchmark(BENCHMARK_PATH)
+
+    embedding_client = LocalEmbeddingClient()
+
+    store = JsonVectorStore(INDEX_PATH)
+    store.load()
+
+    retriever = Retriever(store)
+
+    evidence_evaluator = EvidenceEvaluator(
+        LocalChatClient()
+    )
+
+    chat_client = LocalChatClient()
+
+    pipeline = RAGPipeline(
+        embedding_client=embedding_client,
+        retriever=retriever,
+        evidence_evaluator=evidence_evaluator,
+        chat_client=chat_client,
+        top_k=3,
+    )
+
+    for case in cases:
+        result = pipeline.ask(case.query)
+
+        assert evaluate_benchmark_case(
+            case,
+            result,
+        ), f"Falló el caso del benchmark: {case.id}"
