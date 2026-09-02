@@ -1,5 +1,3 @@
-from collections.abc import Sequence
-
 from rag_lab.models import RAGResult
 from rag_lab.pipeline_utils import select_results
 from rag_lab.prompting import build_rag_messages
@@ -9,7 +7,7 @@ from rag_lab.providers import (
     EvidenceEvaluatorProvider,
     RetrieverProvider,
 )
-from rag_lab.evidence_evaluator import EvidenceDecision
+from rag_lab.inference import RAG_ANSWER_PROFILE
 
 
 ABSTENTION_MESSAGE = (
@@ -54,6 +52,14 @@ class RAGPipeline:
             score_threshold=None,
         )
 
+        if not results:
+            return RAGResult(
+                answer=ABSTENTION_MESSAGE,
+                sufficient=False,
+                retrieved_chunk_ids=(),
+                selected_chunk_ids=(),
+            )
+
         decision = self.evidence_evaluator.evaluate(
             query,
             results,
@@ -75,8 +81,40 @@ class RAGPipeline:
             decision.selected_chunk_ids,
         )
 
+        if not selected_results:
+            return RAGResult(
+                answer=ABSTENTION_MESSAGE,
+                sufficient=False,
+                retrieved_chunk_ids=tuple(
+                    result.chunk.id
+                    for result in results
+                ),
+                selected_chunk_ids=(),
+            )
+
+        messages = build_rag_messages(
+            query,
+            selected_results,
+        )
+
+        generation = self.chat_client.generate(
+            messages,
+            profile=RAG_ANSWER_PROFILE,
+        )
+
+        if not generation.content.strip():
+            return RAGResult(
+                answer=ABSTENTION_MESSAGE,
+                sufficient=False,
+                retrieved_chunk_ids=tuple(
+                    result.chunk.id
+                    for result in results
+                ),
+                selected_chunk_ids=(),
+            )
+
         return RAGResult(
-            answer="",
+            answer=generation.content,
             sufficient=True,
             retrieved_chunk_ids=tuple(
                 result.chunk.id

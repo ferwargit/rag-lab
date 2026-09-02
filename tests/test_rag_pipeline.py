@@ -6,6 +6,7 @@ from rag_lab.rag_pipeline import (
     ABSTENTION_MESSAGE,
     RAGPipeline,
 )
+from rag_lab.generation import GenerationResult
 
 
 class FakeEmbeddingClient:
@@ -241,7 +242,15 @@ def test_rag_pipeline_selects_evidence_before_generation() -> None:
     )
 
     chat_client = FakeChatClient(
-        generation_result=None,
+        generation_result=GenerationResult(
+            content="El piano se conecta al ordenador mediante una interfaz USB MIDI.",
+            reasoning=None,
+            input_tokens=100,
+            total_output_tokens=15,
+            reasoning_output_tokens=0,
+            tokens_per_second=40.0,
+            time_to_first_token_seconds=0.2,
+        ),
     )
 
     pipeline = RAGPipeline(
@@ -270,4 +279,163 @@ def test_rag_pipeline_selects_evidence_before_generation() -> None:
         "¿Cómo se conecta el piano al ordenador?"
     )
 
+    assert len(chat_client.calls) == 1
+    assert chat_client.calls[0]["profile"].name == "rag-answer"
+
+    messages = chat_client.calls[0]["messages"]
+
+    assert len(messages) == 2
+
+    assert messages[0]["role"] == "system"
+    assert messages[1]["role"] == "user"
+
+    user_content = messages[1]["content"]
+
+    assert "knowledge-001" in user_content
+    assert (
+        "El dispositivo MIDI se conecta al ordenador mediante "
+        "una interfaz USB MIDI."
+    ) in user_content
+
+    assert "knowledge-000" not in user_content
+    assert (
+        "MIDI Laboratory es una aplicación personal desarrollada "
+        "con Electron."
+    ) not in user_content
+
+
+def test_rag_pipeline_abstains_when_sufficient_evidence_has_no_selection() -> None:
+    from rag_lab.evidence_evaluator import EvidenceDecision
+
+    retrieved = [
+        make_search_result(
+            "knowledge-001",
+            "El dispositivo MIDI se conecta al ordenador mediante una interfaz USB MIDI.",
+            0.80,
+        )
+    ]
+
+    embedding_client = FakeEmbeddingClient()
+    retriever = FakeRetriever(retrieved)
+
+    evidence_evaluator = FakeEvidenceEvaluator(
+        EvidenceDecision(
+            sufficient=True,
+            selected_chunk_ids=(),
+        )
+    )
+
+    chat_client = FakeChatClient(
+        generation_result=None,
+    )
+
+    pipeline = RAGPipeline(
+        embedding_client=embedding_client,
+        retriever=retriever,
+        evidence_evaluator=evidence_evaluator,
+        chat_client=chat_client,
+    )
+
+    result = pipeline.ask(
+        "¿Cómo se conecta el piano al ordenador?"
+    )
+
+    assert result.sufficient is False
+    assert result.answer == ABSTENTION_MESSAGE
+
+    assert result.retrieved_chunk_ids == (
+        "knowledge-001",
+    )
+
+    assert result.selected_chunk_ids == ()
+
     assert chat_client.calls == []
+
+
+def test_rag_pipeline_abstains_when_retrieval_returns_no_results() -> None:
+    embedding_client = FakeEmbeddingClient()
+
+    retriever = FakeRetriever(
+        results=[],
+    )
+
+    evidence_evaluator = FakeEvidenceEvaluator(
+        decision=None,
+    )
+
+    chat_client = FakeChatClient(
+        generation_result=None,
+    )
+
+    pipeline = RAGPipeline(
+        embedding_client=embedding_client,
+        retriever=retriever,
+        evidence_evaluator=evidence_evaluator,
+        chat_client=chat_client,
+    )
+
+    result = pipeline.ask(
+        "¿Qué información desconocida existe?"
+    )
+
+    assert result.sufficient is False
+    assert result.answer == ABSTENTION_MESSAGE
+    assert result.retrieved_chunk_ids == ()
+    assert result.selected_chunk_ids == ()
+
+    assert len(embedding_client.calls) == 1
+    assert len(retriever.calls) == 1
+
+    assert evidence_evaluator.calls == []
+    assert chat_client.calls == []
+
+
+def test_rag_pipeline_abstains_when_generation_returns_empty_content() -> None:
+    from rag_lab.evidence_evaluator import EvidenceDecision
+    from rag_lab.generation import GenerationResult
+
+    retrieved = [
+        make_search_result(
+            "knowledge-001",
+            "El dispositivo MIDI se conecta al ordenador mediante una interfaz USB MIDI.",
+            0.80,
+        )
+    ]
+
+    embedding_client = FakeEmbeddingClient()
+    retriever = FakeRetriever(retrieved)
+
+    evidence_evaluator = FakeEvidenceEvaluator(
+        EvidenceDecision(
+            sufficient=True,
+            selected_chunk_ids=("knowledge-001",),
+        )
+    )
+
+    chat_client = FakeChatClient(
+        generation_result=GenerationResult(
+            content="",
+            reasoning=None,
+            input_tokens=100,
+            total_output_tokens=0,
+            reasoning_output_tokens=0,
+            tokens_per_second=None,
+            time_to_first_token_seconds=None,
+        ),
+    )
+
+    pipeline = RAGPipeline(
+        embedding_client=embedding_client,
+        retriever=retriever,
+        evidence_evaluator=evidence_evaluator,
+        chat_client=chat_client,
+    )
+
+    result = pipeline.ask(
+        "¿Cómo se conecta el piano al ordenador?"
+    )
+
+    assert result.sufficient is False
+    assert result.answer == ABSTENTION_MESSAGE
+    assert result.retrieved_chunk_ids == ("knowledge-001",)
+    assert result.selected_chunk_ids == ()
