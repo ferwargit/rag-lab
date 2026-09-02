@@ -81,3 +81,70 @@ def test_rag_pipeline_end_to_end_abstains_when_evidence_is_missing() -> None:
 
     assert result.retrieved_chunk_ids
     assert result.selected_chunk_ids == ()
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    "query, expected_sufficient, expected_chunk_id",
+    [
+        (
+            "¿Cómo se conecta el piano al ordenador?",
+            True,
+            "knowledge-001",
+        ),
+        (
+            "¿Dónde se ejecuta la interfaz de usuario?",
+            True,
+            "knowledge-002",
+        ),
+        (
+            "¿Cuál es el objetivo de la aplicación?",
+            True,
+            "knowledge-003",
+        ),
+        (
+            "¿Qué sistema operativo utiliza MIDI Laboratory?",
+            False,
+            None,
+        ),
+    ],
+)
+def test_rag_pipeline_end_to_end_benchmark_queries(
+    query: str,
+    expected_sufficient: bool,
+    expected_chunk_id: str | None,
+) -> None:
+    embedding_client = LocalEmbeddingClient()
+
+    store = JsonVectorStore(INDEX_PATH)
+    store.load()
+
+    retriever = Retriever(store)
+
+    evidence_evaluator = EvidenceEvaluator(
+        LocalChatClient()
+    )
+
+    chat_client = LocalChatClient()
+
+    pipeline = RAGPipeline(
+        embedding_client=embedding_client,
+        retriever=retriever,
+        evidence_evaluator=evidence_evaluator,
+        chat_client=chat_client,
+        top_k=3,
+    )
+
+    result = pipeline.ask(query)
+
+    assert result.sufficient is expected_sufficient
+
+    if expected_sufficient:
+        assert expected_chunk_id is not None
+        assert expected_chunk_id in result.retrieved_chunk_ids
+        assert expected_chunk_id in result.selected_chunk_ids
+        assert result.answer.strip()
+        assert result.answer != ABSTENTION_MESSAGE
+    else:
+        assert result.selected_chunk_ids == ()
+        assert result.answer == ABSTENTION_MESSAGE
