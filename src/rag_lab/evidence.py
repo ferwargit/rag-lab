@@ -5,11 +5,19 @@ from rag_lab.retrieval import SearchResult
 
 @dataclass(frozen=True)
 class EvidenceAssessment:
-    """Representa una evaluación preliminar de la evidencia recuperada."""
+    """Representa una evaluación preliminar de retrieval."""
 
     results: tuple[SearchResult, ...]
     has_candidates: bool
     best_score: float | None
+
+
+@dataclass(frozen=True)
+class EvidenceDecision:
+    """Representa la decisión semántica del evaluador."""
+
+    sufficient: bool
+
 
 def assess_evidence(
     results: list[SearchResult],

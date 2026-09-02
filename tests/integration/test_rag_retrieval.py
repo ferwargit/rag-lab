@@ -69,6 +69,7 @@ BENCHMARK_CASES = [
 ]
 
 
+@pytest.mark.integration
 @pytest.mark.parametrize(
     "case",
     BENCHMARK_CASES,
