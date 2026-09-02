@@ -2,7 +2,13 @@ import json
 import urllib.error
 import urllib.request
 
-from rag_lab.inference import ANSWER_PROFILE, InferenceProfile
+from rag_lab.inference import (
+    ANSWER_PROFILE,
+    InferenceProfile,
+    ModelCapabilities,
+    ReasoningMode,
+    validate_profile,
+)
 from dataclasses import dataclass
 
 
@@ -66,6 +72,16 @@ class LocalChatClient:
             raise GenerationError(
                 "El único mensaje no-system debe tener role='user'."
             )
+
+        capabilities = self.get_model_capabilities()
+
+        try:
+            validate_profile(
+                profile,
+                capabilities,
+            )
+        except ValueError as exc:
+            raise GenerationError(str(exc)) from exc
 
         payload = {
             "model": self.model,
@@ -231,4 +247,121 @@ class LocalChatClient:
             model_instance_id=model_instance_id,
         )
 
+    def get_model_capabilities(
+        self,
+    ) -> ModelCapabilities:
+        """Obtiene las capacidades declaradas por LM Studio."""
 
+        request = urllib.request.Request(
+            url=f"{self.base_url}/api/v1/models",
+            method="GET",
+        )
+
+        try:
+            with urllib.request.urlopen(
+                request,
+                timeout=self.timeout,
+            ) as response:
+                response_body = response.read().decode("utf-8")
+
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode(
+                "utf-8",
+                errors="replace",
+            )
+
+            raise GenerationError(
+                f"LM Studio devolvió HTTP {exc.code}: {detail}"
+            ) from exc
+
+        except urllib.error.URLError as exc:
+            raise GenerationError(
+                f"No se pudo consultar LM Studio: {exc.reason}"
+            ) from exc
+
+        except TimeoutError as exc:
+            raise GenerationError(
+                "La consulta de capacidades de LM Studio agotó "
+                "el timeout."
+            ) from exc
+
+        try:
+            response_json = json.loads(response_body)
+
+        except json.JSONDecodeError as exc:
+            raise GenerationError(
+                "LM Studio devolvió JSON inválido al consultar "
+                "las capacidades."
+            ) from exc
+
+        models = response_json.get("models")
+
+        if not isinstance(models, list):
+            raise GenerationError(
+                "La respuesta de LM Studio no contiene una lista "
+                "de modelos válida."
+            )
+
+        model_data = next(
+            (
+                model
+                for model in models
+                if isinstance(model, dict)
+                and model.get("key") == self.model
+            ),
+            None,
+        )
+
+        if model_data is None:
+            raise GenerationError(
+                f"El modelo '{self.model}' no aparece en "
+                "GET /api/v1/models."
+            )
+
+        capabilities = model_data.get("capabilities", {})
+
+        if not isinstance(capabilities, dict):
+            capabilities = {}
+
+        reasoning = capabilities.get("reasoning", {})
+
+        if not isinstance(reasoning, dict):
+            reasoning = {}
+
+        allowed_options = reasoning.get(
+            "allowed_options",
+            [],
+        )
+
+        if not isinstance(allowed_options, list):
+            allowed_options = []
+
+        valid_modes: list[ReasoningMode] = []
+
+        for option in allowed_options:
+            if option in {
+                "off",
+                "low",
+                "medium",
+                "high",
+                "on",
+            }:
+                valid_modes.append(option)
+
+        default_reasoning = reasoning.get("default")
+
+        if default_reasoning not in {
+            None,
+            "off",
+            "low",
+            "medium",
+            "high",
+            "on",
+        }:
+            default_reasoning = None
+
+        return ModelCapabilities(
+            model_id=self.model,
+            reasoning_options=tuple(valid_modes),
+            default_reasoning=default_reasoning,
+        )

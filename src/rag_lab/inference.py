@@ -19,6 +19,23 @@ class InferenceProfile:
     temperature: float
 
 
+@dataclass(frozen=True)
+class ModelCapabilities:
+    model_id: str
+    reasoning_options: tuple[ReasoningMode, ...]
+    default_reasoning: ReasoningMode | None = None
+
+    @property
+    def supports_reasoning(self) -> bool:
+        return bool(self.reasoning_options)
+
+    def supports_reasoning_mode(
+        self,
+        mode: ReasoningMode,
+    ) -> bool:
+        return mode in self.reasoning_options
+
+
 EVIDENCE_PROFILE = InferenceProfile(
     name="evidence",
     reasoning="off",
@@ -37,7 +54,35 @@ CLASSIFIER_PROFILE = InferenceProfile(
 
 ANSWER_PROFILE = InferenceProfile(
     name="answer",
-    reasoning="low",
-    max_output_tokens=2048,
+    reasoning="on",
+    max_output_tokens=8192,
     temperature=0.2,
 )
+
+
+def validate_profile(
+    profile: InferenceProfile,
+    capabilities: ModelCapabilities,
+) -> None:
+    if profile.max_output_tokens <= 0:
+        raise ValueError(
+            "max_output_tokens debe ser mayor que cero."
+        )
+
+    if not 0.0 <= profile.temperature <= 1.0:
+        raise ValueError(
+            "temperature debe estar entre 0.0 y 1.0."
+        )
+
+    if not capabilities.supports_reasoning_mode(
+        profile.reasoning
+    ):
+        supported = ", ".join(
+            capabilities.reasoning_options
+        ) or "ninguno"
+
+        raise ValueError(
+            f"El perfil '{profile.name}' solicita "
+            f"reasoning='{profile.reasoning}', pero el modelo "
+            f"'{capabilities.model_id}' soporta: {supported}."
+        )
