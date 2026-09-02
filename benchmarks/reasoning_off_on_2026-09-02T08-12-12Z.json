@@ -1,0 +1,146 @@
+{
+  "benchmark": "rag_answer_reasoning_off_vs_on",
+  "timestamp_utc": "2026-09-02T08-12-12Z",
+  "model": "qwen/qwen3.5-9b",
+  "cases": 3,
+  "results": [
+    {
+      "query_id": "q001",
+      "query": "¿Cómo se conecta el piano al ordenador?",
+      "mode": "off",
+      "model": "qwen/qwen3.5-9b",
+      "profile": "rag-answer",
+      "reasoning": "off",
+      "max_output_tokens": 1024,
+      "temperature": 0.2,
+      "retrieved_chunk_ids": [
+        "knowledge-001",
+        "knowledge-000",
+        "knowledge-004"
+      ],
+      "response": "Según el contexto proporcionado, el dispositivo MIDI (que recibe eventos provenientes del piano digital) se conecta al ordenador mediante una **interfaz USB MIDI**.",
+      "elapsed_seconds": 5.4008569999132305,
+      "input_tokens": 282,
+      "total_output_tokens": 32,
+      "reasoning_output_tokens": 0,
+      "tokens_per_second": 43.5528443519688,
+      "time_to_first_token_seconds": 0.216052,
+      "reasoning_used": false
+    },
+    {
+      "query_id": "q001",
+      "query": "¿Cómo se conecta el piano al ordenador?",
+      "mode": "on",
+      "model": "qwen/qwen3.5-9b",
+      "profile": "deep-answer",
+      "reasoning": "on",
+      "max_output_tokens": 8192,
+      "temperature": 0.2,
+      "retrieved_chunk_ids": [
+        "knowledge-001",
+        "knowledge-000",
+        "knowledge-004"
+      ],
+      "response": "El piano digital se conecta al ordenador mediante una interfaz USB MIDI.",
+      "elapsed_seconds": 81.80178490001708,
+      "input_tokens": 280,
+      "total_output_tokens": 3367,
+      "reasoning_output_tokens": 3350,
+      "tokens_per_second": 43.513539109712994,
+      "time_to_first_token_seconds": 0.372339,
+      "reasoning_used": true
+    },
+    {
+      "query_id": "q002",
+      "query": "¿Dónde se ejecuta la interfaz de usuario?",
+      "mode": "off",
+      "model": "qwen/qwen3.5-9b",
+      "profile": "rag-answer",
+      "reasoning": "off",
+      "max_output_tokens": 1024,
+      "temperature": 0.2,
+      "retrieved_chunk_ids": [
+        "knowledge-002",
+        "knowledge-001",
+        "knowledge-003"
+      ],
+      "response": "Según el contexto proporcionado, la interfaz de usuario se ejecuta en el proceso renderer.",
+      "elapsed_seconds": 4.937259400030598,
+      "input_tokens": 302,
+      "total_output_tokens": 21,
+      "reasoning_output_tokens": 0,
+      "tokens_per_second": 43.46304880248435,
+      "time_to_first_token_seconds": 0.17937899999999998,
+      "reasoning_used": false
+    },
+    {
+      "query_id": "q002",
+      "query": "¿Dónde se ejecuta la interfaz de usuario?",
+      "mode": "on",
+      "model": "qwen/qwen3.5-9b",
+      "profile": "deep-answer",
+      "reasoning": "on",
+      "max_output_tokens": 8192,
+      "temperature": 0.2,
+      "retrieved_chunk_ids": [
+        "knowledge-002",
+        "knowledge-001",
+        "knowledge-003"
+      ],
+      "response": "La interfaz de usuario se ejecuta en el proceso renderer.",
+      "elapsed_seconds": 13.54051800002344,
+      "input_tokens": 300,
+      "total_output_tokens": 403,
+      "reasoning_output_tokens": 387,
+      "tokens_per_second": 43.860237715942105,
+      "time_to_first_token_seconds": 0.327168,
+      "reasoning_used": true
+    },
+    {
+      "query_id": "q003",
+      "query": "¿Cuál es el objetivo de la aplicación?",
+      "mode": "off",
+      "model": "qwen/qwen3.5-9b",
+      "profile": "rag-answer",
+      "reasoning": "off",
+      "max_output_tokens": 1024,
+      "temperature": 0.2,
+      "retrieved_chunk_ids": [
+        "knowledge-003",
+        "knowledge-004",
+        "knowledge-001"
+      ],
+      "response": "Según el contexto proporcionado, el objetivo de la aplicación es adaptar progresivamente los ejercicios al usuario.",
+      "elapsed_seconds": 5.13459450006485,
+      "input_tokens": 292,
+      "total_output_tokens": 22,
+      "reasoning_output_tokens": 0,
+      "tokens_per_second": 43.458825866693154,
+      "time_to_first_token_seconds": 0.374641,
+      "reasoning_used": false
+    },
+    {
+      "query_id": "q003",
+      "query": "¿Cuál es el objetivo de la aplicación?",
+      "mode": "on",
+      "model": "qwen/qwen3.5-9b",
+      "profile": "deep-answer",
+      "reasoning": "on",
+      "max_output_tokens": 8192,
+      "temperature": 0.2,
+      "retrieved_chunk_ids": [
+        "knowledge-003",
+        "knowledge-004",
+        "knowledge-001"
+      ],
+      "response": "El objetivo de la aplicación es adaptar progresivamente los ejercicios al usuario.",
+      "elapsed_seconds": 14.19387359987013,
+      "input_tokens": 290,
+      "total_output_tokens": 434,
+      "reasoning_output_tokens": 417,
+      "tokens_per_second": 43.50963376645014,
+      "time_to_first_token_seconds": 0.166958,
+      "reasoning_used": true
+    }
+  ]
+}

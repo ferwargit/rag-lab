@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Literal
 
+INFERENCE_LAYER_VERSION = "1.0.0"
 
 ReasoningMode = Literal[
     "off",
@@ -52,8 +53,16 @@ CLASSIFIER_PROFILE = InferenceProfile(
 )
 
 
-ANSWER_PROFILE = InferenceProfile(
-    name="answer",
+RAG_ANSWER_PROFILE = InferenceProfile(
+    name="rag-answer",
+    reasoning="off",
+    max_output_tokens=1024,
+    temperature=0.2,
+)
+
+
+DEEP_ANSWER_PROFILE = InferenceProfile(
+    name="deep-answer",
     reasoning="on",
     max_output_tokens=8192,
     temperature=0.2,

@@ -1,12 +1,18 @@
 import pytest
 
 from rag_lab.inference import (
-    ANSWER_PROFILE,
     CLASSIFIER_PROFILE,
+    DEEP_ANSWER_PROFILE,
     EVIDENCE_PROFILE,
+    INFERENCE_LAYER_VERSION,
+    InferenceProfile,
     ModelCapabilities,
+    RAG_ANSWER_PROFILE,
     validate_profile,
 )
+
+def test_inference_layer_version_is_1_0_0() -> None:
+    assert INFERENCE_LAYER_VERSION == "1.0.0"
 
 
 def test_evidence_profile_disables_reasoning() -> None:
@@ -19,9 +25,15 @@ def test_classifier_profile_disables_reasoning() -> None:
     assert CLASSIFIER_PROFILE.max_output_tokens == 128
 
 
-def test_answer_profile_uses_on_reasoning() -> None:
-    assert ANSWER_PROFILE.reasoning == "on"
-    assert ANSWER_PROFILE.max_output_tokens == 8192
+def test_rag_answer_profile_disables_reasoning() -> None:
+    assert RAG_ANSWER_PROFILE.reasoning == "off"
+    assert RAG_ANSWER_PROFILE.max_output_tokens == 1024
+
+
+def test_deep_answer_profile_enables_reasoning() -> None:
+    assert DEEP_ANSWER_PROFILE.reasoning == "on"
+    assert DEEP_ANSWER_PROFILE.max_output_tokens == 8192
+
 
 def test_qwen_style_capabilities_support_off_and_on() -> None:
     capabilities = ModelCapabilities(
@@ -47,7 +59,12 @@ def test_validate_profile_accepts_supported_reasoning() -> None:
     )
 
     validate_profile(
-        ANSWER_PROFILE,
+        RAG_ANSWER_PROFILE,
+        capabilities,
+    )
+
+    validate_profile(
+        DEEP_ANSWER_PROFILE,
         capabilities,
     )
 
@@ -58,12 +75,12 @@ def test_validate_profile_rejects_unsupported_reasoning() -> None:
         reasoning_options=("off", "on"),
     )
 
-    unsupported = ANSWER_PROFILE.__class__(
+    unsupported = InferenceProfile(
         name="unsupported",
         reasoning="low",
         max_output_tokens=256,
         temperature=0.2,
-    )
+)
 
     with pytest.raises(
         ValueError,
@@ -81,7 +98,7 @@ def test_validate_profile_rejects_invalid_token_budget() -> None:
         reasoning_options=("off", "on"),
     )
 
-    invalid = ANSWER_PROFILE.__class__(
+    invalid = InferenceProfile(
         name="invalid",
         reasoning="off",
         max_output_tokens=0,
@@ -104,7 +121,7 @@ def test_validate_profile_rejects_invalid_temperature() -> None:
         reasoning_options=("off", "on"),
     )
 
-    invalid = ANSWER_PROFILE.__class__(
+    invalid = InferenceProfile(
         name="invalid",
         reasoning="off",
         max_output_tokens=256,

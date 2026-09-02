@@ -1,5 +1,8 @@
 from rag_lab.generation import LocalChatClient
-from rag_lab.inference import EVIDENCE_PROFILE, ANSWER_PROFILE
+from rag_lab.inference import (
+    DEEP_ANSWER_PROFILE,
+    EVIDENCE_PROFILE,
+)
 
 
 def print_result(result) -> None:
@@ -59,7 +62,7 @@ def main() -> None:
 
     low_result = client.generate(
         messages,
-        profile=ANSWER_PROFILE,
+        profile=DEEP_ANSWER_PROFILE,
     )
 
     print_result(low_result)

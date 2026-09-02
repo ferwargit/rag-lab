@@ -3,7 +3,7 @@ import urllib.error
 import urllib.request
 
 from rag_lab.inference import (
-    ANSWER_PROFILE,
+    DEEP_ANSWER_PROFILE,
     InferenceProfile,
     ModelCapabilities,
     ReasoningMode,
@@ -44,7 +44,7 @@ class LocalChatClient:
         self,
         messages: list[dict[str, str]],
         *,
-        profile: InferenceProfile,
+        profile: InferenceProfile = DEEP_ANSWER_PROFILE,
     ) -> GenerationResult:
         """Genera una respuesta usando un perfil de inferencia."""
 
