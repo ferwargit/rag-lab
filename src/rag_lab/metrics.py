@@ -28,3 +28,11 @@ def metrics_from_generation(
             generation.time_to_first_token_seconds
         ),
     )
+
+
+@dataclass(frozen=True)
+class ComponentExecutionMetrics:
+    """Métricas de ejecución de un componente del pipeline."""
+
+    component: str
+    metrics: ExecutionMetrics
