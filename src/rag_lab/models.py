@@ -22,3 +22,13 @@ class EmbeddedChunk:
     index: int
     embedding: tuple[float, ...]
     metadata: dict[str, str] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class RAGResult:
+    """Resultado final de una consulta al sistema RAG."""
+
+    answer: str
+    sufficient: bool
+    retrieved_chunk_ids: tuple[str, ...] = ()
+    selected_chunk_ids: tuple[str, ...] = ()
