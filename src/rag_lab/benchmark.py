@@ -103,3 +103,25 @@ def run_benchmark(
         )
         for case in cases
     ]
+
+
+def run_and_evaluate_benchmark(
+    cases: Sequence[BenchmarkCase],
+    ask: Callable[[str], RAGResult],
+) -> tuple[list[BenchmarkResult], list[bool]]:
+    """Ejecuta el benchmark y evalúa cada resultado."""
+
+    results = run_benchmark(
+        cases,
+        ask,
+    )
+
+    evaluations = [
+        evaluate_benchmark_case(
+            case,
+            result,
+        )
+        for case, result in zip(cases, results, strict=True)
+    ]
+
+    return results, evaluations

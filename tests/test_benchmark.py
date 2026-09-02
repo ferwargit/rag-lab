@@ -6,6 +6,7 @@ from rag_lab.benchmark import (
     build_benchmark_result,
     evaluate_benchmark_case,
     load_benchmark,
+    run_and_evaluate_benchmark,
     run_benchmark,
 )
 from rag_lab.models import RAGResult
@@ -374,3 +375,80 @@ def test_run_benchmark_preserves_case_order() -> None:
         "q003",
         "q001",
     ]
+
+
+def test_run_and_evaluate_benchmark_returns_results_and_evaluations() -> None:
+    cases = [
+        BenchmarkCase(
+            id="q001",
+            query="Pregunta 1",
+            answerable=True,
+            expected_chunk_ids=("knowledge-001",),
+            expected_answer_terms=("USB MIDI",),
+        ),
+        BenchmarkCase(
+            id="q004",
+            query="Pregunta 4",
+            answerable=False,
+            expected_chunk_ids=(),
+            expected_answer_terms=(),
+        ),
+    ]
+
+    def fake_ask(query: str) -> RAGResult:
+        if query == "Pregunta 1":
+            return RAGResult(
+                answer="Se conecta mediante USB MIDI.",
+                sufficient=True,
+                retrieved_chunk_ids=("knowledge-001",),
+                selected_chunk_ids=("knowledge-001",),
+            )
+
+        return RAGResult(
+            answer="No tengo información suficiente.",
+            sufficient=False,
+            retrieved_chunk_ids=("knowledge-000",),
+            selected_chunk_ids=(),
+        )
+
+    results, evaluations = run_and_evaluate_benchmark(
+        cases,
+        fake_ask,
+    )
+
+    assert len(results) == 2
+    assert evaluations == [True, True]
+
+    assert [result.case_id for result in results] == [
+        "q001",
+        "q004",
+    ]
+
+
+def test_run_and_evaluate_benchmark_preserves_failed_evaluation() -> None:
+    cases = [
+        BenchmarkCase(
+            id="q001",
+            query="Pregunta",
+            answerable=True,
+            expected_chunk_ids=("knowledge-001",),
+            expected_answer_terms=("USB MIDI",),
+        )
+    ]
+
+    def fake_ask(query: str) -> RAGResult:
+        return RAGResult(
+            answer="Respuesta incorrecta.",
+            sufficient=True,
+            retrieved_chunk_ids=("knowledge-002",),
+            selected_chunk_ids=("knowledge-002",),
+        )
+
+    results, evaluations = run_and_evaluate_benchmark(
+        cases,
+        fake_ask,
+    )
+
+    assert len(results) == 1
+    assert results[0].case_id == "q001"
+    assert evaluations == [False]
