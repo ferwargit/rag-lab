@@ -1,9 +1,92 @@
 import pytest
 
+from rag_lab.models import RAGResult
+from rag_lab.retrieval import SearchResult
 from rag_lab.rag_pipeline import (
     ABSTENTION_MESSAGE,
     RAGPipeline,
 )
+
+
+class FakeEmbeddingClient:
+    def __init__(self) -> None:
+        self.calls: list[str] = []
+
+    def embed(self, text: str) -> list[float]:
+        self.calls.append(text)
+        return [1.0, 0.0]
+
+
+class FakeRetriever:
+    def __init__(self, results: list[SearchResult]) -> None:
+        self.results = results
+        self.calls: list[tuple[tuple[float, ...], int, float | None]] = []
+
+    def search(
+        self,
+        query_embedding: tuple[float, ...],
+        *,
+        top_k: int = 3,
+        score_threshold: float | None = None,
+    ) -> list[SearchResult]:
+        self.calls.append(
+            (
+                query_embedding,
+                top_k,
+                score_threshold,
+            )
+        )
+        return list(self.results)
+
+
+class FakeEvidenceEvaluator:
+    def __init__(self, decision) -> None:
+        self.decision = decision
+        self.calls: list[tuple[str, list[SearchResult]]] = []
+
+    def evaluate(
+        self,
+        query: str,
+        results: list[SearchResult],
+    ):
+        self.calls.append((query, list(results)))
+        return self.decision
+
+
+class FakeChatClient:
+    def __init__(self, generation_result) -> None:
+        self.generation_result = generation_result
+        self.calls = []
+
+    def generate(self, messages, *, profile):
+        self.calls.append(
+            {
+                "messages": messages,
+                "profile": profile,
+            }
+        )
+        return self.generation_result
+
+
+def make_search_result(
+    chunk_id: str,
+    text: str,
+    score: float,
+) -> SearchResult:
+    from rag_lab.models import EmbeddedChunk
+
+    chunk = EmbeddedChunk(
+        id=chunk_id,
+        text=text,
+        source="test.txt",
+        index=0,
+        embedding=(1.0, 0.0),
+    )
+
+    return SearchResult(
+        chunk=chunk,
+        score=score,
+    )
 
 
 class DummyEmbeddingClient:
@@ -60,21 +143,131 @@ def test_rag_pipeline_rejects_invalid_top_k() -> None:
         )
 
 
-def test_rag_pipeline_ask_is_not_implemented_yet() -> None:
-    pipeline = RAGPipeline(
-        embedding_client=DummyEmbeddingClient(),
-        retriever=DummyRetriever(),
-        evidence_evaluator=DummyEvidenceEvaluator(),
-        chat_client=DummyChatClient(),
-    )
-
-    with pytest.raises(NotImplementedError):
-        pipeline.ask(
-            "Pregunta de prueba"
-        )
-
 
 def test_abstention_message_is_defined() -> None:
     assert ABSTENTION_MESSAGE.startswith(
         "No tengo información suficiente"
     )
+
+
+def test_rag_pipeline_abstains_when_evidence_is_insufficient() -> None:
+    from rag_lab.evidence_evaluator import EvidenceDecision
+    from rag_lab.generation import GenerationResult
+
+    retrieved = [
+        make_search_result(
+            "knowledge-000",
+            "MIDI Laboratory es una aplicación personal desarrollada con Electron.",
+            0.80,
+        )
+    ]
+
+    embedding_client = FakeEmbeddingClient()
+    retriever = FakeRetriever(retrieved)
+
+    evidence_evaluator = FakeEvidenceEvaluator(
+        EvidenceDecision(
+            sufficient=False,
+            selected_chunk_ids=(),
+        )
+    )
+
+    chat_client = FakeChatClient(
+        GenerationResult(
+            content="NO DEBERÍA GENERARSE",
+            reasoning=None,
+            input_tokens=0,
+            total_output_tokens=0,
+            reasoning_output_tokens=0,
+            tokens_per_second=None,
+            time_to_first_token_seconds=None,
+        )
+    )
+
+    pipeline = RAGPipeline(
+        embedding_client=embedding_client,
+        retriever=retriever,
+        evidence_evaluator=evidence_evaluator,
+        chat_client=chat_client,
+        top_k=3,
+    )
+
+    result = pipeline.ask(
+        "¿Qué sistema operativo utiliza MIDI Laboratory?"
+    )
+
+    assert isinstance(result, RAGResult)
+    assert result.sufficient is False
+    assert result.answer == ABSTENTION_MESSAGE
+    assert result.retrieved_chunk_ids == ("knowledge-000",)
+    assert result.selected_chunk_ids == ()
+
+    assert embedding_client.calls == [
+        "¿Qué sistema operativo utiliza MIDI Laboratory?"
+    ]
+
+    assert len(retriever.calls) == 1
+    assert retriever.calls[0][1] == 3
+
+    assert len(evidence_evaluator.calls) == 1
+
+    assert chat_client.calls == []
+
+
+def test_rag_pipeline_selects_evidence_before_generation() -> None:
+    from rag_lab.evidence_evaluator import EvidenceDecision
+
+    retrieved = [
+        make_search_result(
+            "knowledge-001",
+            "El dispositivo MIDI se conecta al ordenador mediante una interfaz USB MIDI.",
+            0.80,
+        ),
+        make_search_result(
+            "knowledge-000",
+            "MIDI Laboratory es una aplicación personal desarrollada con Electron.",
+            0.70,
+        ),
+    ]
+
+    embedding_client = FakeEmbeddingClient()
+    retriever = FakeRetriever(retrieved)
+
+    evidence_evaluator = FakeEvidenceEvaluator(
+        EvidenceDecision(
+            sufficient=True,
+            selected_chunk_ids=("knowledge-001",),
+        )
+    )
+
+    chat_client = FakeChatClient(
+        generation_result=None,
+    )
+
+    pipeline = RAGPipeline(
+        embedding_client=embedding_client,
+        retriever=retriever,
+        evidence_evaluator=evidence_evaluator,
+        chat_client=chat_client,
+    )
+
+    result = pipeline.ask(
+        "¿Cómo se conecta el piano al ordenador?"
+    )
+
+    assert result.sufficient is True
+    assert result.retrieved_chunk_ids == (
+        "knowledge-001",
+        "knowledge-000",
+    )
+    assert result.selected_chunk_ids == (
+        "knowledge-001",
+    )
+
+    assert len(evidence_evaluator.calls) == 1
+
+    assert evidence_evaluator.calls[0][0] == (
+        "¿Cómo se conecta el piano al ordenador?"
+    )
+
+    assert chat_client.calls == []

@@ -9,6 +9,7 @@ from rag_lab.providers import (
     EvidenceEvaluatorProvider,
     RetrieverProvider,
 )
+from rag_lab.evidence_evaluator import EvidenceDecision
 
 
 ABSTENTION_MESSAGE = (
@@ -43,4 +44,46 @@ class RAGPipeline:
     def ask(self, query: str) -> RAGResult:
         """Ejecuta una consulta RAG completa."""
 
-        raise NotImplementedError
+        query_embedding = tuple(
+            self.embedding_client.embed(query)
+        )
+
+        results = self.retriever.search(
+            query_embedding,
+            top_k=self.top_k,
+            score_threshold=None,
+        )
+
+        decision = self.evidence_evaluator.evaluate(
+            query,
+            results,
+        )
+
+        if not decision.sufficient:
+            return RAGResult(
+                answer=ABSTENTION_MESSAGE,
+                sufficient=False,
+                retrieved_chunk_ids=tuple(
+                    result.chunk.id
+                    for result in results
+                ),
+                selected_chunk_ids=(),
+            )
+
+        selected_results = select_results(
+            results,
+            decision.selected_chunk_ids,
+        )
+
+        return RAGResult(
+            answer="",
+            sufficient=True,
+            retrieved_chunk_ids=tuple(
+                result.chunk.id
+                for result in results
+            ),
+            selected_chunk_ids=tuple(
+                result.chunk.id
+                for result in selected_results
+            ),
+        )
