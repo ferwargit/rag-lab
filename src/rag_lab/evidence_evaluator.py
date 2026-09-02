@@ -6,47 +6,41 @@ from rag_lab.evidence import EvidenceDecision
 from rag_lab.generation import LocalChatClient, GenerationResult
 from rag_lab.retrieval import SearchResult
 from rag_lab.inference import EVIDENCE_PROFILE, InferenceProfile
+from rag_lab.providers import ChatGenerator
 
 
-class ChatGenerator(Protocol):
-    def generate(
-        self,
-        messages: list[dict[str, str]],
-        *,
-        profile: InferenceProfile,
-    ) -> GenerationResult:
-        ...
+EVIDENCE_SYSTEM_INSTRUCTION = """
+Eres un evaluador de evidencia para un sistema RAG.
 
+Tu tarea NO es responder la pregunta del usuario.
+Tu tarea es decidir si las evidencias proporcionadas contienen información
+suficiente para responderla.
 
-SYSTEM_INSTRUCTION = """Evalúa las evidencias proporcionadas para determinar
-si contienen información suficiente para responder la pregunta.
+Debes devolver exclusivamente un objeto JSON válido, sin markdown,
+sin explicaciones y sin texto adicional.
 
-Puedes combinar información de varias evidencias.
-
-Selecciona únicamente los chunks que aporten información necesaria
-para responder la pregunta.
-
-Si las evidencias no permiten responder, sufficient debe ser false.
-
-Devuelve exclusivamente JSON válido con esta forma:
+El formato obligatorio es:
 
 {
   "sufficient": true,
   "selected_chunk_ids": ["chunk-id-1", "chunk-id-2"]
 }
 
-o:
+Reglas:
 
-{
-  "sufficient": false,
-  "selected_chunk_ids": []
-}
-
-No incluyas explicaciones.
-
-No incluyas Markdown.
-
-No incluyas texto antes o después del JSON.
+- "sufficient" debe ser un booleano.
+- "selected_chunk_ids" debe ser una lista de IDs de chunks.
+- Solo puedes seleccionar IDs que aparezcan en las evidencias recibidas.
+- Si la evidencia es suficiente, selecciona únicamente los chunks necesarios
+  para responder la pregunta.
+- Si la evidencia NO es suficiente, usa:
+  {
+    "sufficient": false,
+    "selected_chunk_ids": []
+  }
+- No respondas la pregunta.
+- No inventes información.
+- No incluyas comentarios ni texto fuera del JSON.
 """
 
 
@@ -92,7 +86,7 @@ class EvidenceEvaluator:
         messages = [
             {
                 "role": "system",
-                "content": SYSTEM_INSTRUCTION,
+                "content": EVIDENCE_SYSTEM_INSTRUCTION,
             },
             {
                 "role": "user",
@@ -115,7 +109,8 @@ class EvidenceEvaluator:
 
         except json.JSONDecodeError as exc:
             raise ValueError(
-                "El evaluador de evidencia devolvió JSON inválido."
+                "El evaluador de evidencia devolvió JSON inválido. "
+                f"Respuesta recibida: {raw_response!r}"
             ) from exc
 
         if not isinstance(parsed, dict):
