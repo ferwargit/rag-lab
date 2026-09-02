@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Tuple
 
 from rag_lab.retrieval import SearchResult
 
@@ -14,9 +15,10 @@ class EvidenceAssessment:
 
 @dataclass(frozen=True)
 class EvidenceDecision:
-    """Representa la decisión semántica del evaluador."""
+    """Representa la decisión semántica sobre la evidencia."""
 
     sufficient: bool
+    selected_chunk_ids: tuple[str, ...] = ()
 
 
 def assess_evidence(
