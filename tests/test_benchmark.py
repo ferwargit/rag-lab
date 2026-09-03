@@ -4,6 +4,7 @@ from rag_lab.benchmark import (
     BenchmarkCase,
     BenchmarkExecution,
     BenchmarkResult,
+    BenchmarkReport,
     build_benchmark_execution,
     build_benchmark_result,
     evaluate_benchmark_case,
@@ -833,3 +834,69 @@ def test_summarize_benchmark_execution_reports_fail() -> None:
     )
 
 
+def test_benchmark_report_calculates_summary() -> None:
+    execution_1 = BenchmarkExecution(
+        result=BenchmarkResult(
+            case_id="q001",
+            answer="Respuesta 1",
+            sufficient=True,
+            retrieved_chunk_ids=("knowledge-001",),
+            selected_chunk_ids=("knowledge-001",),
+        ),
+        evidence_metrics=None,
+        answer_metrics=None,
+    )
+
+    execution_2 = BenchmarkExecution(
+        result=BenchmarkResult(
+            case_id="q002",
+            answer="Respuesta 2",
+            sufficient=True,
+            retrieved_chunk_ids=("knowledge-002",),
+            selected_chunk_ids=("knowledge-002",),
+        ),
+        evidence_metrics=None,
+        answer_metrics=None,
+    )
+
+    report = BenchmarkReport(
+        executions=(
+            execution_1,
+            execution_2,
+        ),
+        evaluations=(
+            True,
+            False,
+        ),
+    )
+
+    assert report.total_cases == 2
+    assert report.passed_cases == 1
+    assert report.accuracy == 0.5
+
+
+def test_benchmark_report_with_no_cases_has_zero_accuracy() -> None:
+    report = BenchmarkReport(
+        executions=(),
+        evaluations=(),
+    )
+
+    assert report.total_cases == 0
+    assert report.passed_cases == 0
+    assert report.accuracy == 0.0
+
+
+def test_benchmark_report_is_immutable() -> None:
+    report = BenchmarkReport(
+        executions=(),
+        evaluations=(),
+    )
+
+    try:
+        report.executions = ()
+    except AttributeError:
+        pass
+    else:
+        raise AssertionError(
+            "BenchmarkReport debe ser inmutable."
+        )

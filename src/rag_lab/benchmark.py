@@ -203,3 +203,26 @@ def summarize_benchmark_execution(
         f"retrieved={len(execution.result.retrieved_chunk_ids)} | "
         f"selected={len(execution.result.selected_chunk_ids)}"
     )
+
+
+@dataclass(frozen=True)
+class BenchmarkReport:
+    """Resultado global de una ejecución de benchmark."""
+
+    executions: tuple[BenchmarkExecution, ...]
+    evaluations: tuple[bool, ...]
+
+    @property
+    def total_cases(self) -> int:
+        return len(self.executions)
+
+    @property
+    def passed_cases(self) -> int:
+        return sum(self.evaluations)
+
+    @property
+    def accuracy(self) -> float:
+        if not self.executions:
+            return 0.0
+
+        return self.passed_cases / self.total_cases
