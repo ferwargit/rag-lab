@@ -303,3 +303,32 @@ def run_full_benchmark_with_metrics(
         executions,
         evaluations,
     )
+
+
+def format_benchmark_report(
+    report: BenchmarkReport,
+) -> str:
+    """Formatea un reporte de benchmark como texto legible."""
+
+    lines = [
+        "Benchmark Report",
+        "================",
+        f"Cases: {report.total_cases}",
+        f"Passed: {report.passed_cases}",
+        f"Accuracy: {report.accuracy:.2%}",
+        "",
+    ]
+
+    lines.extend(
+        summarize_benchmark_execution(
+            execution,
+            passed,
+        )
+        for execution, passed in zip(
+            report.executions,
+            report.evaluations,
+            strict=True,
+        )
+    )
+
+    return "\n".join(lines)

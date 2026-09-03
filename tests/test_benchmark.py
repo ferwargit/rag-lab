@@ -16,6 +16,7 @@ from rag_lab.benchmark import (
     run_full_benchmark,
     run_full_benchmark_with_metrics,
     summarize_benchmark_execution,
+    format_benchmark_report,
 )
 from rag_lab.metrics import ExecutionMetrics
 from rag_lab.models import RAGResult
@@ -1109,3 +1110,53 @@ def test_run_full_benchmark_with_metrics_returns_report() -> None:
     )
 
     assert report.executions[1].answer_metrics is None
+
+
+def test_format_benchmark_report_returns_readable_summary() -> None:
+    execution_1 = BenchmarkExecution(
+        result=BenchmarkResult(
+            case_id="q001",
+            answer="Respuesta 1",
+            sufficient=True,
+            retrieved_chunk_ids=("knowledge-001",),
+            selected_chunk_ids=("knowledge-001",),
+        ),
+        evidence_metrics=None,
+        answer_metrics=None,
+    )
+
+    execution_2 = BenchmarkExecution(
+        result=BenchmarkResult(
+            case_id="q004",
+            answer="No tengo información suficiente.",
+            sufficient=False,
+            retrieved_chunk_ids=("knowledge-000",),
+            selected_chunk_ids=(),
+        ),
+        evidence_metrics=None,
+        answer_metrics=None,
+    )
+
+    report = BenchmarkReport(
+        executions=(
+            execution_1,
+            execution_2,
+        ),
+        evaluations=(
+            True,
+            True,
+        ),
+    )
+
+    formatted = format_benchmark_report(report)
+
+    assert formatted == (
+        "Benchmark Report\n"
+        "================\n"
+        "Cases: 2\n"
+        "Passed: 2\n"
+        "Accuracy: 100.00%\n"
+        "\n"
+        "q001 | PASS | sufficient=True | retrieved=1 | selected=1\n"
+        "q004 | PASS | sufficient=False | retrieved=1 | selected=0"
+    )
