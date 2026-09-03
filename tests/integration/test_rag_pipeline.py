@@ -14,6 +14,7 @@ from rag_lab.benchmark import (
     run_and_evaluate_benchmark,
     run_benchmark_with_metrics,
     run_benchmark,
+    run_full_benchmark,
 )
 
 
@@ -469,3 +470,48 @@ def test_rag_pipeline_benchmark_execution_tracks_metrics_per_case() -> None:
 
     assert abstention_execution.evidence_metrics is not None
     assert abstention_execution.answer_metrics is None
+
+
+@pytest.mark.integration
+def test_rag_pipeline_end_to_end_returns_full_benchmark_report() -> None:
+    cases = load_benchmark(BENCHMARK_PATH)
+
+    embedding_client = LocalEmbeddingClient()
+
+    store = JsonVectorStore(INDEX_PATH)
+    store.load()
+
+    retriever = Retriever(store)
+
+    evidence_evaluator = EvidenceEvaluator(
+        LocalChatClient()
+    )
+
+    chat_client = LocalChatClient()
+
+    pipeline = RAGPipeline(
+        embedding_client=embedding_client,
+        retriever=retriever,
+        evidence_evaluator=evidence_evaluator,
+        chat_client=chat_client,
+        top_k=3,
+    )
+
+    report = run_full_benchmark(
+        cases,
+        pipeline.ask,
+    )
+
+    assert report.total_cases == 4
+    assert report.passed_cases == 4
+    assert report.accuracy == 1.0
+
+    assert [
+        execution.result.case_id
+        for execution in report.executions
+    ] == [
+        "q001",
+        "q002",
+        "q003",
+        "q004",
+    ]
