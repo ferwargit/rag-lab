@@ -141,6 +141,11 @@ class BenchmarkExecution:
     evidence_metrics: ExecutionMetrics | None
     answer_metrics: ExecutionMetrics | None
 
+    @property
+    def case_id(self) -> str:
+        """Devuelve el ID del caso ejecutado."""
+        return self.result.case_id
+
 
 def build_benchmark_execution(
     case: BenchmarkCase,
@@ -196,13 +201,69 @@ def summarize_benchmark_execution(
 
     status = "PASS" if passed else "FAIL"
 
-    return (
-        f"{execution.result.case_id} | "
-        f"{status} | "
-        f"sufficient={execution.result.sufficient} | "
-        f"retrieved={len(execution.result.retrieved_chunk_ids)} | "
-        f"selected={len(execution.result.selected_chunk_ids)}"
-    )
+    lines = [
+        (
+            f"{execution.result.case_id} | "
+            f"{status} | "
+            f"sufficient={execution.result.sufficient} | "
+            f"retrieved={len(execution.result.retrieved_chunk_ids)} | "
+            f"selected={len(execution.result.selected_chunk_ids)}"
+        ),
+    ]
+
+    if execution.evidence_metrics is not None:
+        metrics = execution.evidence_metrics
+
+        speed = (
+            f"{metrics.tokens_per_second:.2f} tok/s"
+            if metrics.tokens_per_second is not None
+            else "N/A"
+        )
+
+        ttft = (
+            f"{metrics.time_to_first_token_seconds:.2f} s"
+            if metrics.time_to_first_token_seconds is not None
+            else "N/A"
+        )
+
+        lines.append(
+            (
+                f"     Evidence | "
+                f"input={metrics.input_tokens} | "
+                f"output={metrics.total_output_tokens} | "
+                f"reasoning={metrics.reasoning_output_tokens} | "
+                f"speed={speed} | "
+                f"TTFT={ttft}"
+            )
+        )
+
+    if execution.answer_metrics is not None:
+        metrics = execution.answer_metrics
+
+        speed = (
+            f"{metrics.tokens_per_second:.2f} tok/s"
+            if metrics.tokens_per_second is not None
+            else "N/A"
+        )
+
+        ttft = (
+            f"{metrics.time_to_first_token_seconds:.2f} s"
+            if metrics.time_to_first_token_seconds is not None
+            else "N/A"
+        )
+
+        lines.append(
+            (
+                f"     Answer   | "
+                f"input={metrics.input_tokens} | "
+                f"output={metrics.total_output_tokens} | "
+                f"reasoning={metrics.reasoning_output_tokens} | "
+                f"speed={speed} | "
+                f"TTFT={ttft}"
+            )
+        )
+
+    return "\n".join(lines)
 
 
 @dataclass(frozen=True)

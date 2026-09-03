@@ -1160,3 +1160,85 @@ def test_format_benchmark_report_returns_readable_summary() -> None:
         "q001 | PASS | sufficient=True | retrieved=1 | selected=1\n"
         "q004 | PASS | sufficient=False | retrieved=1 | selected=0"
     )
+
+
+def test_summarize_benchmark_execution_includes_metrics() -> None:
+    result = BenchmarkResult(
+        case_id="q001",
+        answer="Respuesta",
+        sufficient=True,
+        retrieved_chunk_ids=("knowledge-001",),
+        selected_chunk_ids=("knowledge-001",),
+    )
+
+    evidence_metrics = ExecutionMetrics(
+        input_tokens=409,
+        total_output_tokens=26,
+        reasoning_output_tokens=0,
+        tokens_per_second=41.5,
+        time_to_first_token_seconds=0.28,
+    )
+
+    answer_metrics = ExecutionMetrics(
+        input_tokens=179,
+        total_output_tokens=28,
+        reasoning_output_tokens=0,
+        tokens_per_second=42.1,
+        time_to_first_token_seconds=0.32,
+    )
+
+    execution = BenchmarkExecution(
+        result=result,
+        evidence_metrics=evidence_metrics,
+        answer_metrics=answer_metrics,
+    )
+
+    summary = summarize_benchmark_execution(
+        execution,
+        True,
+    )
+
+    assert "q001 | PASS" in summary
+
+    assert (
+        "Evidence | "
+        "input=409 | "
+        "output=26 | "
+        "reasoning=0 | "
+        "speed=41.50 tok/s | "
+        "TTFT=0.28 s"
+    ) in summary
+
+    assert (
+        "Answer   | "
+        "input=179 | "
+        "output=28 | "
+        "reasoning=0 | "
+        "speed=42.10 tok/s | "
+        "TTFT=0.32 s"
+    ) in summary
+
+
+def test_summarize_benchmark_execution_without_metrics() -> None:
+    result = BenchmarkResult(
+        case_id="q004",
+        answer="No tengo información suficiente.",
+        sufficient=False,
+        retrieved_chunk_ids=("knowledge-000",),
+        selected_chunk_ids=(),
+    )
+
+    execution = BenchmarkExecution(
+        result=result,
+        evidence_metrics=None,
+        answer_metrics=None,
+    )
+
+    summary = summarize_benchmark_execution(
+        execution,
+        True,
+    )
+
+    assert summary == (
+        "q004 | PASS | sufficient=False | retrieved=1 | selected=0"
+    )
