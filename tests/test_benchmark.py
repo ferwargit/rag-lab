@@ -654,26 +654,37 @@ class FakePipelineWithMetrics:
     def __init__(
         self,
         results: dict[str, RAGResult],
-        evidence_metrics: ExecutionMetrics,
-        answer_metrics: ExecutionMetrics | None,
+        evidence_metrics: dict[str, ExecutionMetrics | None],
+        answer_metrics: dict[str, ExecutionMetrics | None],
     ) -> None:
         self.results = results
-        self.evidence_evaluator = FakeEvaluatorWithMetrics(
-            evidence_metrics
-        )
+        self.evidence_metrics = evidence_metrics
         self.answer_metrics = answer_metrics
+
+        self.evidence_evaluator = FakeEvaluatorWithMetrics(
+            None,
+        )
+
+        self._last_metrics: ExecutionMetrics | None = None
         self.queries: list[str] = []
 
     @property
     def last_metrics(self) -> ExecutionMetrics | None:
-        return self.answer_metrics
+        return self._last_metrics
 
     def ask(self, query: str) -> RAGResult:
         self.queries.append(query)
+
+        self.evidence_evaluator.last_metrics = (
+            self.evidence_metrics[query]
+        )
+
+        self._last_metrics = self.answer_metrics[query]
+
         return self.results[query]
 
 
-def test_run_benchmark_with_metrics_captures_component_metrics() -> None:
+def test_run_benchmark_with_metrics_captures_metrics_per_query() -> None:
     cases = [
         BenchmarkCase(
             id="q001",
@@ -691,7 +702,7 @@ def test_run_benchmark_with_metrics_captures_component_metrics() -> None:
         ),
     ]
 
-    evidence_metrics = ExecutionMetrics(
+    q001_evidence_metrics = ExecutionMetrics(
         input_tokens=409,
         total_output_tokens=26,
         reasoning_output_tokens=0,
@@ -699,12 +710,20 @@ def test_run_benchmark_with_metrics_captures_component_metrics() -> None:
         time_to_first_token_seconds=0.28,
     )
 
-    answer_metrics = ExecutionMetrics(
+    q001_answer_metrics = ExecutionMetrics(
         input_tokens=179,
         total_output_tokens=28,
         reasoning_output_tokens=0,
         tokens_per_second=42.1,
         time_to_first_token_seconds=0.32,
+    )
+
+    q004_evidence_metrics = ExecutionMetrics(
+        input_tokens=415,
+        total_output_tokens=20,
+        reasoning_output_tokens=0,
+        tokens_per_second=41.2,
+        time_to_first_token_seconds=0.27,
     )
 
     pipeline = FakePipelineWithMetrics(
@@ -722,8 +741,14 @@ def test_run_benchmark_with_metrics_captures_component_metrics() -> None:
                 selected_chunk_ids=(),
             ),
         },
-        evidence_metrics=evidence_metrics,
-        answer_metrics=answer_metrics,
+        evidence_metrics={
+            "Pregunta 1": q001_evidence_metrics,
+            "Pregunta 4": q004_evidence_metrics,
+        },
+        answer_metrics={
+            "Pregunta 1": q001_answer_metrics,
+            "Pregunta 4": None,
+        },
     )
 
     executions = run_benchmark_with_metrics(
@@ -734,12 +759,18 @@ def test_run_benchmark_with_metrics_captures_component_metrics() -> None:
     assert len(executions) == 2
 
     assert executions[0].case_id == "q001"
-    assert executions[0].evidence_metrics == evidence_metrics
-    assert executions[0].answer_metrics == answer_metrics
+    assert executions[0].evidence_metrics == (
+        q001_evidence_metrics
+    )
+    assert executions[0].answer_metrics == (
+        q001_answer_metrics
+    )
 
     assert executions[1].case_id == "q004"
-    assert executions[1].evidence_metrics == evidence_metrics
-    assert executions[1].answer_metrics == answer_metrics
+    assert executions[1].evidence_metrics == (
+        q004_evidence_metrics
+    )
+    assert executions[1].answer_metrics is None
 
     assert pipeline.queries == [
         "Pregunta 1",
