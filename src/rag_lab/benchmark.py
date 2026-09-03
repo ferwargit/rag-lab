@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from rag_lab.answer_validation import validate_answer_terms
 from rag_lab.models import RAGResult
+from rag_lab.metrics import ExecutionMetrics
 
 @dataclass(frozen=True)
 class BenchmarkCase:
@@ -125,3 +126,13 @@ def run_and_evaluate_benchmark(
     ]
 
     return results, evaluations
+
+
+@dataclass(frozen=True)
+class BenchmarkExecution:
+    """Resultado completo de una ejecución de benchmark."""
+
+    case_id: str
+    result: BenchmarkResult
+    evidence_metrics: ExecutionMetrics | None
+    answer_metrics: ExecutionMetrics | None

@@ -2,6 +2,7 @@ from pathlib import Path
 
 from rag_lab.benchmark import (
     BenchmarkCase,
+    BenchmarkExecution,
     BenchmarkResult,
     build_benchmark_result,
     evaluate_benchmark_case,
@@ -9,7 +10,9 @@ from rag_lab.benchmark import (
     run_and_evaluate_benchmark,
     run_benchmark,
 )
+from rag_lab.metrics import ExecutionMetrics
 from rag_lab.models import RAGResult
+
 
 BENCHMARK_PATH = Path("data/benchmark.json")
 
@@ -452,3 +455,93 @@ def test_run_and_evaluate_benchmark_preserves_failed_evaluation() -> None:
     assert len(results) == 1
     assert results[0].case_id == "q001"
     assert evaluations == [False]
+
+
+def test_benchmark_execution_stores_component_metrics() -> None:
+    result = BenchmarkResult(
+        case_id="q001",
+        answer="Respuesta",
+        sufficient=True,
+        retrieved_chunk_ids=("knowledge-001",),
+        selected_chunk_ids=("knowledge-001",),
+    )
+
+    evidence_metrics = ExecutionMetrics(
+        input_tokens=409,
+        total_output_tokens=26,
+        reasoning_output_tokens=0,
+        tokens_per_second=41.5,
+        time_to_first_token_seconds=0.28,
+    )
+
+    answer_metrics = ExecutionMetrics(
+        input_tokens=179,
+        total_output_tokens=28,
+        reasoning_output_tokens=0,
+        tokens_per_second=42.1,
+        time_to_first_token_seconds=0.32,
+    )
+
+    execution = BenchmarkExecution(
+        case_id="q001",
+        result=result,
+        evidence_metrics=evidence_metrics,
+        answer_metrics=answer_metrics,
+    )
+
+    assert execution.case_id == "q001"
+    assert execution.result == result
+    assert execution.evidence_metrics == evidence_metrics
+    assert execution.answer_metrics == answer_metrics
+
+
+def test_benchmark_execution_allows_missing_answer_metrics() -> None:
+    result = BenchmarkResult(
+        case_id="q004",
+        answer="No tengo información suficiente.",
+        sufficient=False,
+        retrieved_chunk_ids=("knowledge-000",),
+        selected_chunk_ids=(),
+    )
+
+    evidence_metrics = ExecutionMetrics(
+        input_tokens=415,
+        total_output_tokens=20,
+        reasoning_output_tokens=0,
+        tokens_per_second=41.2,
+        time_to_first_token_seconds=0.27,
+    )
+
+    execution = BenchmarkExecution(
+        case_id="q004",
+        result=result,
+        evidence_metrics=evidence_metrics,
+        answer_metrics=None,
+    )
+
+    assert execution.evidence_metrics == evidence_metrics
+    assert execution.answer_metrics is None
+
+
+def test_benchmark_execution_is_immutable() -> None:
+    execution = BenchmarkExecution(
+        case_id="q001",
+        result=BenchmarkResult(
+            case_id="q001",
+            answer="Respuesta",
+            sufficient=True,
+            retrieved_chunk_ids=("knowledge-001",),
+            selected_chunk_ids=("knowledge-001",),
+        ),
+        evidence_metrics=None,
+        answer_metrics=None,
+    )
+
+    try:
+        execution.case_id = "q002"
+    except AttributeError:
+        pass
+    else:
+        raise AssertionError(
+            "BenchmarkExecution debe ser inmutable."
+        )
