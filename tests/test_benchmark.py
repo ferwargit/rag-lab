@@ -485,13 +485,12 @@ def test_benchmark_execution_stores_component_metrics() -> None:
     )
 
     execution = BenchmarkExecution(
-        case_id="q001",
         result=result,
         evidence_metrics=evidence_metrics,
         answer_metrics=answer_metrics,
     )
 
-    assert execution.case_id == "q001"
+    assert execution.result.case_id == "q001"
     assert execution.result == result
     assert execution.evidence_metrics == evidence_metrics
     assert execution.answer_metrics == answer_metrics
@@ -515,7 +514,6 @@ def test_benchmark_execution_allows_missing_answer_metrics() -> None:
     )
 
     execution = BenchmarkExecution(
-        case_id="q004",
         result=result,
         evidence_metrics=evidence_metrics,
         answer_metrics=None,
@@ -527,7 +525,6 @@ def test_benchmark_execution_allows_missing_answer_metrics() -> None:
 
 def test_benchmark_execution_is_immutable() -> None:
     execution = BenchmarkExecution(
-        case_id="q001",
         result=BenchmarkResult(
             case_id="q001",
             answer="Respuesta",
@@ -593,7 +590,7 @@ def test_build_benchmark_execution_combines_result_and_metrics() -> None:
         answer_metrics=answer_metrics,
     )
 
-    assert execution.case_id == "q001"
+    assert execution.result.case_id == "q001"
 
     assert execution.result.answer == (
         "Se conecta mediante una interfaz USB MIDI."
@@ -636,7 +633,7 @@ def test_build_benchmark_execution_allows_missing_answer_metrics() -> None:
         answer_metrics=None,
     )
 
-    assert execution.case_id == "q004"
+    assert execution.result.case_id == "q004"
     assert execution.result.sufficient is False
     assert execution.evidence_metrics == evidence_metrics
     assert execution.answer_metrics is None
@@ -758,7 +755,7 @@ def test_run_benchmark_with_metrics_captures_metrics_per_query() -> None:
 
     assert len(executions) == 2
 
-    assert executions[0].case_id == "q001"
+    assert executions[0].result.case_id == "q001"
     assert executions[0].evidence_metrics == (
         q001_evidence_metrics
     )
@@ -766,7 +763,7 @@ def test_run_benchmark_with_metrics_captures_metrics_per_query() -> None:
         q001_answer_metrics
     )
 
-    assert executions[1].case_id == "q004"
+    assert executions[1].result.case_id == "q004"
     assert executions[1].evidence_metrics == (
         q004_evidence_metrics
     )
