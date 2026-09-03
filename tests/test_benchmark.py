@@ -11,6 +11,7 @@ from rag_lab.benchmark import (
     build_benchmark_report,
     build_metrics_summary,
     evaluate_benchmark_case,
+    format_metrics_summary,
     load_benchmark,
     run_and_evaluate_benchmark,
     run_benchmark,
@@ -1160,7 +1161,25 @@ def test_format_benchmark_report_returns_readable_summary() -> None:
         "Accuracy: 100.00%\n"
         "\n"
         "q001 | PASS | sufficient=True | retrieved=1 | selected=1\n"
-        "q004 | PASS | sufficient=False | retrieved=1 | selected=0"
+        "q004 | PASS | sufficient=False | retrieved=1 | selected=0\n"
+        "\n"
+        "Evidence Evaluator\n"
+        "------------------\n"
+        "Samples: 0\n"
+        "Avg input tokens: 0.00\n"
+        "Avg output tokens: 0.00\n"
+        "Avg reasoning tokens: 0.00\n"
+        "Avg speed: N/A\n"
+        "Avg TTFT: N/A\n"
+        "\n"
+        "Answer Generation\n"
+        "-----------------\n"
+        "Samples: 0\n"
+        "Avg input tokens: 0.00\n"
+        "Avg output tokens: 0.00\n"
+        "Avg reasoning tokens: 0.00\n"
+        "Avg speed: N/A\n"
+        "Avg TTFT: N/A"
     )
 
 
@@ -1389,3 +1408,57 @@ def test_benchmark_report_exposes_metrics_summaries() -> None:
         avg_tokens_per_second=50.0,
         avg_time_to_first_token_seconds=0.10,
     )
+
+
+def test_format_metrics_summary() -> None:
+    summary = MetricsSummary(
+        sample_count=3,
+        avg_input_tokens=180.0,
+        avg_output_tokens=21.333333,
+        avg_reasoning_output_tokens=0.0,
+        avg_tokens_per_second=39.04,
+        avg_time_to_first_token_seconds=0.34,
+    )
+
+    lines = format_metrics_summary(
+        "Answer Generation",
+        summary,
+    )
+
+    assert lines == [
+        "Answer Generation",
+        "-----------------",
+        "Samples: 3",
+        "Avg input tokens: 180.00",
+        "Avg output tokens: 21.33",
+        "Avg reasoning tokens: 0.00",
+        "Avg speed: 39.04 tok/s",
+        "Avg TTFT: 0.34 s",
+    ]
+
+
+def test_format_metrics_summary_handles_missing_metrics() -> None:
+    summary = MetricsSummary(
+        sample_count=0,
+        avg_input_tokens=0.0,
+        avg_output_tokens=0.0,
+        avg_reasoning_output_tokens=0.0,
+        avg_tokens_per_second=None,
+        avg_time_to_first_token_seconds=None,
+    )
+
+    lines = format_metrics_summary(
+        "Answer Generation",
+        summary,
+    )
+
+    assert lines == [
+        "Answer Generation",
+        "-----------------",
+        "Samples: 0",
+        "Avg input tokens: 0.00",
+        "Avg output tokens: 0.00",
+        "Avg reasoning tokens: 0.00",
+        "Avg speed: N/A",
+        "Avg TTFT: N/A",
+    ]

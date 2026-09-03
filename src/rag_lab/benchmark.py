@@ -461,6 +461,39 @@ def run_full_benchmark_with_metrics(
     )
 
 
+def format_metrics_summary(
+    title: str,
+    summary: MetricsSummary,
+) -> list[str]:
+    """Formatea un resumen de métricas para el reporte."""
+
+    speed = (
+        f"{summary.avg_tokens_per_second:.2f} tok/s"
+        if summary.avg_tokens_per_second is not None
+        else "N/A"
+    )
+
+    ttft = (
+        f"{summary.avg_time_to_first_token_seconds:.2f} s"
+        if summary.avg_time_to_first_token_seconds is not None
+        else "N/A"
+    )
+
+    return [
+        title,
+        "-" * len(title),
+        f"Samples: {summary.sample_count}",
+        f"Avg input tokens: {summary.avg_input_tokens:.2f}",
+        f"Avg output tokens: {summary.avg_output_tokens:.2f}",
+        (
+            "Avg reasoning tokens: "
+            f"{summary.avg_reasoning_output_tokens:.2f}"
+        ),
+        f"Avg speed: {speed}",
+        f"Avg TTFT: {ttft}",
+    ]
+
+
 def format_benchmark_report(
     report: BenchmarkReport,
 ) -> str:
@@ -484,6 +517,24 @@ def format_benchmark_report(
             report.executions,
             report.evaluations,
             strict=True,
+        )
+    )
+
+    lines.append("")
+
+    lines.extend(
+        format_metrics_summary(
+            "Evidence Evaluator",
+            report.evidence_metrics_summary,
+        )
+    )
+
+    lines.append("")
+
+    lines.extend(
+        format_metrics_summary(
+            "Answer Generation",
+            report.answer_metrics_summary,
         )
     )
 
