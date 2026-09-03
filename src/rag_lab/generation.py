@@ -1,3 +1,4 @@
+import time
 import json
 import urllib.error
 import urllib.request
@@ -21,6 +22,7 @@ class GenerationResult:
     reasoning_output_tokens: int
     tokens_per_second: float | None
     time_to_first_token_seconds: float | None
+    generation_time_seconds: float
     response_id: str | None = None
     model_instance_id: str | None = None
 
@@ -106,6 +108,8 @@ class LocalChatClient:
             method="POST",
         )
 
+        generation_start = time.perf_counter()
+
         try:
             with urllib.request.urlopen(
                 request,
@@ -132,6 +136,11 @@ class LocalChatClient:
             raise GenerationError(
                 "La generación en LM Studio agotó el timeout."
             ) from exc
+
+        finally:
+            generation_time_seconds = (
+                time.perf_counter() - generation_start
+            )
 
         try:
             response_json = json.loads(response_body)
@@ -243,6 +252,7 @@ class LocalChatClient:
                 if time_to_first_token_seconds is not None
                 else None
             ),
+            generation_time_seconds=generation_time_seconds,
             response_id=response_id,
             model_instance_id=model_instance_id,
         )

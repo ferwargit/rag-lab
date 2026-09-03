@@ -13,6 +13,7 @@ def test_execution_metrics_stores_generation_metrics() -> None:
         reasoning_output_tokens=0,
         tokens_per_second=42.08,
         time_to_first_token_seconds=0.322,
+        generation_time_seconds=1.25,
     )
 
     assert metrics.input_tokens == 179
@@ -20,6 +21,7 @@ def test_execution_metrics_stores_generation_metrics() -> None:
     assert metrics.reasoning_output_tokens == 0
     assert metrics.tokens_per_second == 42.08
     assert metrics.time_to_first_token_seconds == 0.322
+    assert metrics.generation_time_seconds == 1.25
 
 
 def test_execution_metrics_accepts_missing_optional_timing() -> None:
@@ -29,6 +31,7 @@ def test_execution_metrics_accepts_missing_optional_timing() -> None:
         reasoning_output_tokens=0,
         tokens_per_second=None,
         time_to_first_token_seconds=None,
+        generation_time_seconds=1.25,
     )
 
     assert metrics.tokens_per_second is None
@@ -42,6 +45,7 @@ def test_execution_metrics_is_immutable() -> None:
         reasoning_output_tokens=0,
         tokens_per_second=40.0,
         time_to_first_token_seconds=0.2,
+        generation_time_seconds=1.25,
     )
 
     try:
@@ -63,6 +67,7 @@ def test_metrics_from_generation_extracts_metrics() -> None:
         reasoning_output_tokens=0,
         tokens_per_second=42.08,
         time_to_first_token_seconds=0.322,
+        generation_time_seconds=1.25,
     )
 
     metrics = metrics_from_generation(generation)
@@ -72,6 +77,7 @@ def test_metrics_from_generation_extracts_metrics() -> None:
     assert metrics.reasoning_output_tokens == 0
     assert metrics.tokens_per_second == 42.08
     assert metrics.time_to_first_token_seconds == 0.322
+    assert metrics.generation_time_seconds == 1.25
 
 
 def test_metrics_from_generation_preserves_missing_timing() -> None:
@@ -83,12 +89,14 @@ def test_metrics_from_generation_preserves_missing_timing() -> None:
         reasoning_output_tokens=0,
         tokens_per_second=None,
         time_to_first_token_seconds=None,
+        generation_time_seconds=1.25,
     )
 
     metrics = metrics_from_generation(generation)
 
     assert metrics.tokens_per_second is None
     assert metrics.time_to_first_token_seconds is None
+    assert metrics.generation_time_seconds == 1.25
 
 
 def test_component_execution_metrics_stores_component_name() -> None:
@@ -100,6 +108,7 @@ def test_component_execution_metrics_stores_component_name() -> None:
             reasoning_output_tokens=0,
             tokens_per_second=41.52,
             time_to_first_token_seconds=0.28,
+            generation_time_seconds=1.25,
         ),
     )
 
@@ -116,6 +125,7 @@ def test_component_execution_metrics_is_immutable() -> None:
             reasoning_output_tokens=0,
             tokens_per_second=42.08,
             time_to_first_token_seconds=0.322,
+            generation_time_seconds=1.25,
         ),
     )
 
@@ -127,3 +137,20 @@ def test_component_execution_metrics_is_immutable() -> None:
         raise AssertionError(
             "ComponentExecutionMetrics debe ser inmutable."
         )
+
+
+def test_metrics_from_generation_preserves_generation_time() -> None:
+    generation = GenerationResult(
+        content="Respuesta",
+        reasoning=None,
+        input_tokens=100,
+        total_output_tokens=20,
+        reasoning_output_tokens=0,
+        tokens_per_second=40.0,
+        time_to_first_token_seconds=0.2,
+        generation_time_seconds=1.37,
+    )
+
+    metrics = metrics_from_generation(generation)
+
+    assert metrics.generation_time_seconds == 1.37

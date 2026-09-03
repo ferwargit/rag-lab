@@ -12,6 +12,7 @@ class ExecutionMetrics:
     reasoning_output_tokens: int
     tokens_per_second: float | None
     time_to_first_token_seconds: float | None
+    generation_time_seconds: float
 
 
 def metrics_from_generation(
@@ -27,6 +28,7 @@ def metrics_from_generation(
         time_to_first_token_seconds=(
             generation.time_to_first_token_seconds
         ),
+        generation_time_seconds=generation.generation_time_seconds,
     )
 
 
