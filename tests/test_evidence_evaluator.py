@@ -241,3 +241,54 @@ def test_evaluator_last_metrics_is_none_before_evaluation() -> None:
     )
 
     assert evaluator.last_metrics is None
+
+
+def test_evaluator_clears_last_generation_before_each_evaluation() -> None:
+    evaluator = EvidenceEvaluator(
+        FakeChatClient(
+            response=(
+                '{"sufficient": true, '
+                '"selected_chunk_ids": ["knowledge-001"]}'
+            )
+        )
+    )
+
+    results = [
+        SearchResult(
+            chunk=EmbeddedChunk(
+                id="knowledge-001",
+                text="Contenido relevante.",
+                source="test.txt",
+                index=0,
+                embedding=(1.0, 0.0),
+            ),
+            score=0.9,
+        )
+    ]
+
+    first_decision = evaluator.evaluate(
+        "Primera pregunta",
+        results,
+    )
+
+    assert first_decision.sufficient is True
+    assert evaluator.last_generation is not None
+
+    evaluator.client = FakeChatClient(
+        response=(
+            '{"sufficient": false, '
+            '"selected_chunk_ids": []}'
+        )
+    )
+
+    second_decision = evaluator.evaluate(
+        "Segunda pregunta",
+        results,
+    )
+
+    assert second_decision.sufficient is False
+    assert evaluator.last_generation is not None
+    assert evaluator.last_generation.content == (
+        '{"sufficient": false, '
+        '"selected_chunk_ids": []}'
+    )

@@ -69,6 +69,8 @@ class EvidenceEvaluator:
     ) -> EvidenceDecision:
         """Evalúa un conjunto de evidencias recuperadas."""
 
+        self.last_generation = None
+
         evidence_sections: list[str] = []
 
         valid_chunk_ids: set[str] = set()
