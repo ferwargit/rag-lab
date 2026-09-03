@@ -243,3 +243,34 @@ def build_benchmark_report(
         executions=tuple(executions),
         evaluations=tuple(evaluations),
     )
+
+
+def run_full_benchmark(
+    cases: Sequence[BenchmarkCase],
+    ask: Callable[[str], RAGResult],
+) -> BenchmarkReport:
+    """Ejecuta, evalúa y resume un benchmark completo."""
+
+    results, evaluations = run_and_evaluate_benchmark(
+        cases,
+        ask,
+    )
+
+    executions = tuple(
+        build_benchmark_execution(
+            case,
+            result,
+            evidence_metrics=None,
+            answer_metrics=None,
+        )
+        for case, result in zip(
+            cases,
+            results,
+            strict=True,
+        )
+    )
+
+    return build_benchmark_report(
+        executions,
+        evaluations,
+    )

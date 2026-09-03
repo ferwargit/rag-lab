@@ -13,6 +13,7 @@ from rag_lab.benchmark import (
     run_and_evaluate_benchmark,
     run_benchmark,
     run_benchmark_with_metrics,
+    run_full_benchmark,
     summarize_benchmark_execution,
 )
 from rag_lab.metrics import ExecutionMetrics
@@ -952,3 +953,52 @@ def test_build_benchmark_report_rejects_mismatched_lengths() -> None:
         raise AssertionError(
             "Debe rechazarse una cantidad desigual de ejecuciones y evaluaciones."
         )
+
+
+def test_run_full_benchmark_returns_report() -> None:
+    cases = [
+        BenchmarkCase(
+            id="q001",
+            query="Pregunta 1",
+            answerable=True,
+            expected_chunk_ids=("knowledge-001",),
+            expected_answer_terms=("USB MIDI",),
+        ),
+        BenchmarkCase(
+            id="q004",
+            query="Pregunta 4",
+            answerable=False,
+            expected_chunk_ids=(),
+            expected_answer_terms=(),
+        ),
+    ]
+
+    def fake_ask(query: str) -> RAGResult:
+        if query == "Pregunta 1":
+            return RAGResult(
+                answer="Se conecta mediante USB MIDI.",
+                sufficient=True,
+                retrieved_chunk_ids=("knowledge-001",),
+                selected_chunk_ids=("knowledge-001",),
+            )
+
+        return RAGResult(
+            answer="No tengo información suficiente.",
+            sufficient=False,
+            retrieved_chunk_ids=("knowledge-000",),
+            selected_chunk_ids=(),
+        )
+
+    report = run_full_benchmark(
+        cases,
+        fake_ask,
+    )
+
+    assert report.total_cases == 2
+    assert report.passed_cases == 2
+    assert report.accuracy == 1.0
+
+    assert [execution.result.case_id for execution in report.executions] == [
+        "q001",
+        "q004",
+    ]
