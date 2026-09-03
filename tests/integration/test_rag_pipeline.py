@@ -269,3 +269,45 @@ def test_rag_pipeline_end_to_end_evaluates_full_benchmark() -> None:
         True,
         True,
     ]
+
+
+@pytest.mark.integration
+def test_rag_pipeline_exposes_real_execution_metrics() -> None:
+    embedding_client = LocalEmbeddingClient()
+
+    store = JsonVectorStore(INDEX_PATH)
+    store.load()
+
+    retriever = Retriever(store)
+
+    evidence_evaluator = EvidenceEvaluator(
+        LocalChatClient()
+    )
+
+    chat_client = LocalChatClient()
+
+    pipeline = RAGPipeline(
+        embedding_client=embedding_client,
+        retriever=retriever,
+        evidence_evaluator=evidence_evaluator,
+        chat_client=chat_client,
+        top_k=3,
+    )
+
+    result = pipeline.ask(
+        "¿Cómo se conecta el piano al ordenador?"
+    )
+
+    assert result.sufficient is True
+
+    assert evidence_evaluator.last_metrics is not None
+    assert pipeline.last_metrics is not None
+
+    assert evidence_evaluator.last_metrics.total_output_tokens > 0
+    assert pipeline.last_metrics.total_output_tokens > 0
+
+    assert evidence_evaluator.last_metrics.reasoning_output_tokens == 0
+    assert pipeline.last_metrics.reasoning_output_tokens == 0
+
+    assert evidence_evaluator.last_metrics.tokens_per_second is not None
+    assert pipeline.last_metrics.tokens_per_second is not None

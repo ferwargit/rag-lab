@@ -4,6 +4,7 @@ from rag_lab.benchmark import (
     BenchmarkCase,
     BenchmarkExecution,
     BenchmarkResult,
+    build_benchmark_execution,
     build_benchmark_result,
     evaluate_benchmark_case,
     load_benchmark,
@@ -545,3 +546,96 @@ def test_benchmark_execution_is_immutable() -> None:
         raise AssertionError(
             "BenchmarkExecution debe ser inmutable."
         )
+
+
+def test_build_benchmark_execution_combines_result_and_metrics() -> None:
+    case = BenchmarkCase(
+        id="q001",
+        query="¿Cómo se conecta el piano al ordenador?",
+        answerable=True,
+        expected_chunk_ids=("knowledge-001",),
+        expected_answer_terms=("interfaz USB MIDI",),
+    )
+
+    result = RAGResult(
+        answer="Se conecta mediante una interfaz USB MIDI.",
+        sufficient=True,
+        retrieved_chunk_ids=(
+            "knowledge-001",
+            "knowledge-000",
+        ),
+        selected_chunk_ids=(
+            "knowledge-001",
+        ),
+    )
+
+    evidence_metrics = ExecutionMetrics(
+        input_tokens=409,
+        total_output_tokens=26,
+        reasoning_output_tokens=0,
+        tokens_per_second=41.5,
+        time_to_first_token_seconds=0.28,
+    )
+
+    answer_metrics = ExecutionMetrics(
+        input_tokens=179,
+        total_output_tokens=28,
+        reasoning_output_tokens=0,
+        tokens_per_second=42.1,
+        time_to_first_token_seconds=0.32,
+    )
+
+    execution = build_benchmark_execution(
+        case,
+        result,
+        evidence_metrics=evidence_metrics,
+        answer_metrics=answer_metrics,
+    )
+
+    assert execution.case_id == "q001"
+
+    assert execution.result.answer == (
+        "Se conecta mediante una interfaz USB MIDI."
+    )
+
+    assert execution.result.sufficient is True
+
+    assert execution.evidence_metrics == evidence_metrics
+    assert execution.answer_metrics == answer_metrics
+
+
+def test_build_benchmark_execution_allows_missing_answer_metrics() -> None:
+    case = BenchmarkCase(
+        id="q004",
+        query="¿Qué sistema operativo utiliza MIDI Laboratory?",
+        answerable=False,
+        expected_chunk_ids=(),
+        expected_answer_terms=(),
+    )
+
+    result = RAGResult(
+        answer="No tengo información suficiente.",
+        sufficient=False,
+        retrieved_chunk_ids=("knowledge-000",),
+        selected_chunk_ids=(),
+    )
+
+    evidence_metrics = ExecutionMetrics(
+        input_tokens=415,
+        total_output_tokens=20,
+        reasoning_output_tokens=0,
+        tokens_per_second=41.2,
+        time_to_first_token_seconds=0.27,
+    )
+
+    execution = build_benchmark_execution(
+        case,
+        result,
+        evidence_metrics=evidence_metrics,
+        answer_metrics=None,
+    )
+
+    assert execution.case_id == "q004"
+    assert execution.result.sufficient is False
+    assert execution.evidence_metrics == evidence_metrics
+    assert execution.answer_metrics is None

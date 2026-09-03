@@ -136,3 +136,27 @@ class BenchmarkExecution:
     result: BenchmarkResult
     evidence_metrics: ExecutionMetrics | None
     answer_metrics: ExecutionMetrics | None
+
+
+def build_benchmark_execution(
+    case: BenchmarkCase,
+    result: RAGResult,
+    *,
+    evidence_metrics: ExecutionMetrics | None,
+    answer_metrics: ExecutionMetrics | None,
+) -> BenchmarkExecution:
+    """Construye el registro completo de una ejecución."""
+
+    benchmark_result = build_benchmark_result(
+        case,
+        result,
+    )
+
+    return BenchmarkExecution(
+        case_id=case.id,
+        result=benchmark_result,
+        evidence_metrics=evidence_metrics,
+        answer_metrics=answer_metrics,
+    )
+
+

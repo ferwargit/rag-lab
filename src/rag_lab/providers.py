@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Protocol
 from rag_lab.generation import GenerationResult
 from rag_lab.inference import InferenceProfile
 from rag_lab.retrieval import SearchResult
+from rag_lab.metrics import ExecutionMetrics
 
 if TYPE_CHECKING:
     from rag_lab.evidence_evaluator import EvidenceDecision
@@ -42,6 +43,10 @@ class EvidenceEvaluatorProvider(Protocol):
         query: str,
         results: Sequence[SearchResult],
     ) -> EvidenceDecision:
+        ...
+
+    @property
+    def last_metrics(self) -> ExecutionMetrics | None:
         ...
 
 
