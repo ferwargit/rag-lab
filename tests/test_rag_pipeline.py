@@ -500,3 +500,66 @@ def test_rag_pipeline_exposes_last_metrics() -> None:
     assert pipeline.last_metrics.reasoning_output_tokens == 0
     assert pipeline.last_metrics.tokens_per_second == 40.0
     assert pipeline.last_metrics.time_to_first_token_seconds == 0.2
+
+
+def test_rag_pipeline_clears_last_generation_before_each_ask() -> None:
+    from rag_lab.evidence_evaluator import EvidenceDecision
+    from rag_lab.generation import GenerationResult
+
+    retrieved = [
+        make_search_result(
+            "knowledge-001",
+            (
+                "El dispositivo MIDI se conecta al ordenador "
+                "mediante una interfaz USB MIDI."
+            ),
+            0.80,
+        )
+    ]
+
+    embedding_client = FakeEmbeddingClient()
+    retriever = FakeRetriever(retrieved)
+
+    evidence_evaluator = FakeEvidenceEvaluator(
+        EvidenceDecision(
+            sufficient=True,
+            selected_chunk_ids=("knowledge-001",),
+        )
+    )
+
+    chat_client = FakeChatClient(
+        generation_result=GenerationResult(
+            content="Respuesta válida.",
+            reasoning=None,
+            input_tokens=100,
+            total_output_tokens=10,
+            reasoning_output_tokens=0,
+            tokens_per_second=40.0,
+            time_to_first_token_seconds=0.2,
+        )
+    )
+
+    pipeline = RAGPipeline(
+        embedding_client=embedding_client,
+        retriever=retriever,
+        evidence_evaluator=evidence_evaluator,
+        chat_client=chat_client,
+    )
+
+    first_result = pipeline.ask("Primera pregunta")
+
+    assert first_result.sufficient is True
+    assert pipeline.last_metrics is not None
+
+    pipeline.evidence_evaluator = FakeEvidenceEvaluator(
+        EvidenceDecision(
+            sufficient=False,
+            selected_chunk_ids=(),
+        )
+    )
+
+    second_result = pipeline.ask("Segunda pregunta")
+
+    assert second_result.sufficient is False
+    assert pipeline.last_generation is None
+    assert pipeline.last_metrics is None

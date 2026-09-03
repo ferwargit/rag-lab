@@ -59,6 +59,8 @@ class RAGPipeline:
     def ask(self, query: str) -> RAGResult:
         """Ejecuta una consulta RAG completa."""
 
+        self.last_generation = None
+
         query_embedding = tuple(
             self.embedding_client.embed(query)
         )
