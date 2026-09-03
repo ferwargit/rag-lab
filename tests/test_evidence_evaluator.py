@@ -158,3 +158,86 @@ def test_evaluator_rejects_selected_chunks_when_insufficient() -> None:
             "Pregunta de prueba",
             [make_result()],
         )
+
+
+def test_evaluator_stores_last_generation() -> None:
+    evaluator = EvidenceEvaluator(
+        FakeChatClient(
+            response=(
+                '{"sufficient": true, '
+                '"selected_chunk_ids": ["knowledge-001"]}'
+            )
+        )
+    )
+
+    results = [
+        SearchResult(
+            chunk=EmbeddedChunk(
+                id="knowledge-001",
+                text="Contenido relevante.",
+                source="test.txt",
+                index=0,
+                embedding=(1.0, 0.0),
+            ),
+            score=0.9,
+        )
+    ]
+
+    decision = evaluator.evaluate(
+        "Pregunta",
+        results,
+    )
+
+    assert decision.sufficient is True
+    assert evaluator.last_generation is not None
+    assert evaluator.last_generation.content == (
+        '{"sufficient": true, '
+        '"selected_chunk_ids": ["knowledge-001"]}'
+    )
+
+
+def test_evaluator_exposes_last_metrics() -> None:
+    evaluator = EvidenceEvaluator(
+        FakeChatClient(
+            response=(
+                '{"sufficient": true, '
+                '"selected_chunk_ids": ["knowledge-001"]}'
+            )
+        )
+    )
+
+    results = [
+        SearchResult(
+            chunk=EmbeddedChunk(
+                id="knowledge-001",
+                text="Contenido relevante.",
+                source="test.txt",
+                index=0,
+                embedding=(1.0, 0.0),
+            ),
+            score=0.9,
+        )
+    ]
+
+    evaluator.evaluate(
+        "Pregunta",
+        results,
+    )
+
+    assert evaluator.last_metrics is not None
+    assert evaluator.last_metrics.input_tokens >= 0
+    assert evaluator.last_metrics.total_output_tokens >= 0
+    assert evaluator.last_metrics.reasoning_output_tokens == 0
+
+
+def test_evaluator_last_metrics_is_none_before_evaluation() -> None:
+    evaluator = EvidenceEvaluator(
+        FakeChatClient(
+            response=(
+                '{"sufficient": false, '
+                '"selected_chunk_ids": []}'
+            )
+        )
+    )
+
+    assert evaluator.last_metrics is None

@@ -7,6 +7,7 @@ from rag_lab.generation import LocalChatClient, GenerationResult
 from rag_lab.retrieval import SearchResult
 from rag_lab.inference import EVIDENCE_PROFILE, InferenceProfile
 from rag_lab.providers import ChatGenerator
+from rag_lab.metrics import ExecutionMetrics, metrics_from_generation
 
 
 EVIDENCE_SYSTEM_INSTRUCTION = """
@@ -47,11 +48,19 @@ Reglas:
 class EvidenceEvaluator:
     """Evalúa suficiencia y selecciona evidencias relevantes."""
 
-    def __init__(
-        self,
-        client: ChatGenerator,
-    ) -> None:
+    def __init__(self, client: ChatGenerator) -> None:
         self.client = client
+        self.last_generation: GenerationResult | None = None
+
+    @property
+    def last_metrics(self) -> ExecutionMetrics | None:
+        """Devuelve las métricas de la última evaluación."""
+        if self.last_generation is None:
+            return None
+
+        return metrics_from_generation(
+            self.last_generation,
+        )
 
     def evaluate(
         self,
@@ -101,6 +110,8 @@ class EvidenceEvaluator:
             messages,
             profile=EVIDENCE_PROFILE,
         )
+
+        self.last_generation = generation
 
         raw_response = generation.content
 
