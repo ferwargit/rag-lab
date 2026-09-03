@@ -14,6 +14,7 @@ from rag_lab.benchmark import (
     run_benchmark,
     run_benchmark_with_metrics,
     run_full_benchmark,
+    run_full_benchmark_with_metrics,
     summarize_benchmark_execution,
 )
 from rag_lab.metrics import ExecutionMetrics
@@ -1002,3 +1003,109 @@ def test_run_full_benchmark_returns_report() -> None:
         "q001",
         "q004",
     ]
+
+
+def test_run_full_benchmark_with_metrics_returns_report() -> None:
+    cases = [
+        BenchmarkCase(
+            id="q001",
+            query="Pregunta 1",
+            answerable=True,
+            expected_chunk_ids=("knowledge-001",),
+            expected_answer_terms=("USB MIDI",),
+        ),
+        BenchmarkCase(
+            id="q004",
+            query="Pregunta 4",
+            answerable=False,
+            expected_chunk_ids=(),
+            expected_answer_terms=(),
+        ),
+    ]
+
+    evidence_metrics_q001 = ExecutionMetrics(
+        input_tokens=409,
+        total_output_tokens=26,
+        reasoning_output_tokens=0,
+        tokens_per_second=41.5,
+        time_to_first_token_seconds=0.28,
+    )
+
+    answer_metrics_q001 = ExecutionMetrics(
+        input_tokens=179,
+        total_output_tokens=28,
+        reasoning_output_tokens=0,
+        tokens_per_second=42.1,
+        time_to_first_token_seconds=0.32,
+    )
+
+    evidence_metrics_q004 = ExecutionMetrics(
+        input_tokens=415,
+        total_output_tokens=20,
+        reasoning_output_tokens=0,
+        tokens_per_second=41.2,
+        time_to_first_token_seconds=0.27,
+    )
+
+    pipeline = FakePipelineWithMetrics(
+        results={
+            "Pregunta 1": RAGResult(
+                answer="Se conecta mediante USB MIDI.",
+                sufficient=True,
+                retrieved_chunk_ids=("knowledge-001",),
+                selected_chunk_ids=("knowledge-001",),
+            ),
+            "Pregunta 4": RAGResult(
+                answer="No tengo información suficiente.",
+                sufficient=False,
+                retrieved_chunk_ids=("knowledge-000",),
+                selected_chunk_ids=(),
+            ),
+        },
+        evidence_metrics={
+            "Pregunta 1": evidence_metrics_q001,
+            "Pregunta 4": evidence_metrics_q004,
+        },
+        answer_metrics={
+            "Pregunta 1": answer_metrics_q001,
+            "Pregunta 4": None,
+        },
+    )
+
+    report = run_full_benchmark_with_metrics(
+        cases,
+        pipeline,
+    )
+
+    assert report.total_cases == 2
+    assert report.passed_cases == 2
+    assert report.accuracy == 1.0
+
+    assert len(report.executions) == 2
+
+    assert (
+        report.executions[0].result.case_id
+        == "q001"
+    )
+
+    assert (
+        report.executions[0].evidence_metrics
+        == evidence_metrics_q001
+    )
+
+    assert (
+        report.executions[0].answer_metrics
+        == answer_metrics_q001
+    )
+
+    assert (
+        report.executions[1].result.case_id
+        == "q004"
+    )
+
+    assert (
+        report.executions[1].evidence_metrics
+        == evidence_metrics_q004
+    )
+
+    assert report.executions[1].answer_metrics is None

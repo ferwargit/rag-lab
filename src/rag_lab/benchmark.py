@@ -274,3 +274,32 @@ def run_full_benchmark(
         executions,
         evaluations,
     )
+
+
+def run_full_benchmark_with_metrics(
+    cases: Sequence[BenchmarkCase],
+    pipeline: "RAGPipeline",
+) -> BenchmarkReport:
+    """Ejecuta, evalúa y reporta un benchmark con métricas."""
+
+    executions = run_benchmark_with_metrics(
+        cases,
+        pipeline,
+    )
+
+    evaluations = tuple(
+        evaluate_benchmark_case(
+            case,
+            execution.result,
+        )
+        for case, execution in zip(
+            cases,
+            executions,
+            strict=True,
+        )
+    )
+
+    return build_benchmark_report(
+        executions,
+        evaluations,
+    )
