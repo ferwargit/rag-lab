@@ -1311,3 +1311,81 @@ def test_build_metrics_summary_handles_empty_input() -> None:
         avg_tokens_per_second=None,
         avg_time_to_first_token_seconds=None,
     )
+
+
+def test_benchmark_report_exposes_metrics_summaries() -> None:
+    result_q001 = BenchmarkResult(
+        case_id="q001",
+        answer="Respuesta 1",
+        sufficient=True,
+        retrieved_chunk_ids=("knowledge-001",),
+        selected_chunk_ids=("knowledge-001",),
+    )
+
+    result_q004 = BenchmarkResult(
+        case_id="q004",
+        answer="No tengo información suficiente.",
+        sufficient=False,
+        retrieved_chunk_ids=("knowledge-000",),
+        selected_chunk_ids=(),
+    )
+
+    evidence_metrics_q001 = ExecutionMetrics(
+        input_tokens=100,
+        total_output_tokens=20,
+        reasoning_output_tokens=0,
+        tokens_per_second=40.0,
+        time_to_first_token_seconds=0.20,
+    )
+
+    answer_metrics_q001 = ExecutionMetrics(
+        input_tokens=50,
+        total_output_tokens=10,
+        reasoning_output_tokens=0,
+        tokens_per_second=50.0,
+        time_to_first_token_seconds=0.10,
+    )
+
+    evidence_metrics_q004 = ExecutionMetrics(
+        input_tokens=200,
+        total_output_tokens=30,
+        reasoning_output_tokens=0,
+        tokens_per_second=60.0,
+        time_to_first_token_seconds=0.40,
+    )
+
+    executions = [
+        BenchmarkExecution(
+            result=result_q001,
+            evidence_metrics=evidence_metrics_q001,
+            answer_metrics=answer_metrics_q001,
+        ),
+        BenchmarkExecution(
+            result=result_q004,
+            evidence_metrics=evidence_metrics_q004,
+            answer_metrics=None,
+        ),
+    ]
+
+    report = build_benchmark_report(
+        executions,
+        [True, True],
+    )
+
+    assert report.evidence_metrics_summary == MetricsSummary(
+        sample_count=2,
+        avg_input_tokens=150.0,
+        avg_output_tokens=25.0,
+        avg_reasoning_output_tokens=0.0,
+        avg_tokens_per_second=50.0,
+        avg_time_to_first_token_seconds=0.30,
+    )
+
+    assert report.answer_metrics_summary == MetricsSummary(
+        sample_count=1,
+        avg_input_tokens=50.0,
+        avg_output_tokens=10.0,
+        avg_reasoning_output_tokens=0.0,
+        avg_tokens_per_second=50.0,
+        avg_time_to_first_token_seconds=0.10,
+    )
