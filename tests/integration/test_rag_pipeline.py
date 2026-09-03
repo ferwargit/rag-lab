@@ -9,12 +9,13 @@ from rag_lab.rag_pipeline import ABSTENTION_MESSAGE, RAGPipeline
 from rag_lab.retrieval import Retriever
 from rag_lab.vector_store import JsonVectorStore
 from rag_lab.benchmark import (
-    evaluate_benchmark_case,
     load_benchmark,
     run_and_evaluate_benchmark,
     run_benchmark_with_metrics,
-    run_benchmark,
     run_full_benchmark,
+    run_full_benchmark_with_metrics,
+    run_benchmark,
+    evaluate_benchmark_case,
 )
 
 
@@ -515,3 +516,59 @@ def test_rag_pipeline_end_to_end_returns_full_benchmark_report() -> None:
         "q003",
         "q004",
     ]
+
+
+@pytest.mark.integration
+def test_rag_pipeline_end_to_end_returns_instrumented_benchmark_report() -> None:
+    cases = load_benchmark(BENCHMARK_PATH)
+
+    embedding_client = LocalEmbeddingClient()
+
+    store = JsonVectorStore(INDEX_PATH)
+    store.load()
+
+    retriever = Retriever(store)
+
+    evidence_evaluator = EvidenceEvaluator(
+        LocalChatClient()
+    )
+
+    chat_client = LocalChatClient()
+
+    pipeline = RAGPipeline(
+        embedding_client=embedding_client,
+        retriever=retriever,
+        evidence_evaluator=evidence_evaluator,
+        chat_client=chat_client,
+        top_k=3,
+    )
+
+    report = run_full_benchmark_with_metrics(
+        cases,
+        pipeline,
+    )
+
+    assert report.total_cases == 4
+    assert report.passed_cases == 4
+    assert report.accuracy == 1.0
+
+    assert [
+        execution.result.case_id
+        for execution in report.executions
+    ] == [
+        "q001",
+        "q002",
+        "q003",
+        "q004",
+    ]
+
+    for execution in report.executions:
+        assert execution.evidence_metrics is not None
+        assert (
+            execution.evidence_metrics.total_output_tokens > 0
+        )
+
+    assert report.executions[0].answer_metrics is not None
+    assert report.executions[1].answer_metrics is not None
+    assert report.executions[2].answer_metrics is not None
+    assert report.executions[3].answer_metrics is None
