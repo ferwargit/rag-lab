@@ -186,3 +186,20 @@ def run_benchmark_with_metrics(
         executions.append(execution)
 
     return executions
+
+
+def summarize_benchmark_execution(
+    execution: BenchmarkExecution,
+    passed: bool,
+) -> str:
+    """Genera un resumen textual de una ejecución."""
+
+    status = "PASS" if passed else "FAIL"
+
+    return (
+        f"{execution.result.case_id} | "
+        f"{status} | "
+        f"sufficient={execution.result.sufficient} | "
+        f"retrieved={len(execution.result.retrieved_chunk_ids)} | "
+        f"selected={len(execution.result.selected_chunk_ids)}"
+    )

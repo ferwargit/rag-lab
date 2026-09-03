@@ -11,6 +11,7 @@ from rag_lab.benchmark import (
     run_and_evaluate_benchmark,
     run_benchmark,
     run_benchmark_with_metrics,
+    summarize_benchmark_execution,
 )
 from rag_lab.metrics import ExecutionMetrics
 from rag_lab.models import RAGResult
@@ -773,3 +774,62 @@ def test_run_benchmark_with_metrics_captures_metrics_per_query() -> None:
         "Pregunta 1",
         "Pregunta 4",
     ]
+
+
+def test_summarize_benchmark_execution_reports_pass() -> None:
+    execution = BenchmarkExecution(
+        result=BenchmarkResult(
+            case_id="q001",
+            answer="Se conecta mediante USB MIDI.",
+            sufficient=True,
+            retrieved_chunk_ids=(
+                "knowledge-001",
+                "knowledge-000",
+            ),
+            selected_chunk_ids=(
+                "knowledge-001",
+            ),
+        ),
+        evidence_metrics=None,
+        answer_metrics=None,
+    )
+
+    summary = summarize_benchmark_execution(
+        execution,
+        passed=True,
+    )
+
+    assert summary == (
+        "q001 | PASS | sufficient=True | "
+        "retrieved=2 | selected=1"
+    )
+
+
+def test_summarize_benchmark_execution_reports_fail() -> None:
+    execution = BenchmarkExecution(
+        result=BenchmarkResult(
+            case_id="q002",
+            answer="Respuesta incorrecta.",
+            sufficient=True,
+            retrieved_chunk_ids=(
+                "knowledge-000",
+            ),
+            selected_chunk_ids=(
+                "knowledge-000",
+            ),
+        ),
+        evidence_metrics=None,
+        answer_metrics=None,
+    )
+
+    summary = summarize_benchmark_execution(
+        execution,
+        passed=False,
+    )
+
+    assert summary == (
+        "q002 | FAIL | sufficient=True | "
+        "retrieved=1 | selected=1"
+    )
+
+
