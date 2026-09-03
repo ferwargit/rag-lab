@@ -1,4 +1,8 @@
 from pathlib import Path
+import itertools
+import sys
+import threading
+import time
 
 from rag_lab.benchmark import (
     format_benchmark_report,
@@ -17,6 +21,20 @@ BENCHMARK_PATH = Path("data/benchmark.json")
 INDEX_PATH = Path("storage/index.json")
 
 
+def show_spinner(stop_event: threading.Event) -> None:
+    """Muestra un indicador simple mientras se procesa el benchmark."""
+    for symbol in itertools.cycle(["|", "/", "-", "\\"]):
+        if stop_event.is_set():
+            break
+
+        sys.stdout.write(f"\rProcesando benchmark... {symbol}")
+        sys.stdout.flush()
+        time.sleep(0.2)
+
+    sys.stdout.write("\rProcesando benchmark... listo.\n")
+    sys.stdout.flush()
+
+
 def main() -> None:
     cases = load_benchmark(BENCHMARK_PATH)
 
@@ -27,10 +45,7 @@ def main() -> None:
 
     retriever = Retriever(store)
 
-    evidence_evaluator = EvidenceEvaluator(
-        LocalChatClient()
-    )
-
+    evidence_evaluator = EvidenceEvaluator(LocalChatClient())
     chat_client = LocalChatClient()
 
     pipeline = RAGPipeline(
@@ -41,14 +56,23 @@ def main() -> None:
         top_k=3,
     )
 
-    report = run_full_benchmark_with_metrics(
-        cases,
-        pipeline,
+    stop_event = threading.Event()
+
+    spinner_thread = threading.Thread(
+        target=show_spinner,
+        args=(stop_event,),
+        daemon=True,
     )
 
-    print(
-        format_benchmark_report(report)
-    )
+    spinner_thread.start()
+
+    try:
+        report = run_full_benchmark_with_metrics(cases, pipeline)
+    finally:
+        stop_event.set()
+        spinner_thread.join()
+
+    print(format_benchmark_report(report))
 
 
 if __name__ == "__main__":
