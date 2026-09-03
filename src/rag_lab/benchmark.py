@@ -226,3 +226,20 @@ class BenchmarkReport:
             return 0.0
 
         return self.passed_cases / self.total_cases
+
+
+def build_benchmark_report(
+    executions: Sequence[BenchmarkExecution],
+    evaluations: Sequence[bool],
+) -> BenchmarkReport:
+    """Construye un reporte global a partir de ejecuciones y evaluaciones."""
+
+    if len(executions) != len(evaluations):
+        raise ValueError(
+            "La cantidad de ejecuciones y evaluaciones debe coincidir."
+        )
+
+    return BenchmarkReport(
+        executions=tuple(executions),
+        evaluations=tuple(evaluations),
+    )

@@ -7,6 +7,7 @@ from rag_lab.benchmark import (
     BenchmarkReport,
     build_benchmark_execution,
     build_benchmark_result,
+    build_benchmark_report,
     evaluate_benchmark_case,
     load_benchmark,
     run_and_evaluate_benchmark,
@@ -899,4 +900,55 @@ def test_benchmark_report_is_immutable() -> None:
     else:
         raise AssertionError(
             "BenchmarkReport debe ser inmutable."
+        )
+
+
+def test_build_benchmark_report_creates_report() -> None:
+    execution = BenchmarkExecution(
+        result=BenchmarkResult(
+            case_id="q001",
+            answer="Respuesta correcta.",
+            sufficient=True,
+            retrieved_chunk_ids=("knowledge-001",),
+            selected_chunk_ids=("knowledge-001",),
+        ),
+        evidence_metrics=None,
+        answer_metrics=None,
+    )
+
+    report = build_benchmark_report(
+        [execution],
+        [True],
+    )
+
+    assert report.total_cases == 1
+    assert report.passed_cases == 1
+    assert report.accuracy == 1.0
+    assert report.executions == (execution,)
+    assert report.evaluations == (True,)
+
+
+def test_build_benchmark_report_rejects_mismatched_lengths() -> None:
+    execution = BenchmarkExecution(
+        result=BenchmarkResult(
+            case_id="q001",
+            answer="Respuesta.",
+            sufficient=True,
+            retrieved_chunk_ids=(),
+            selected_chunk_ids=(),
+        ),
+        evidence_metrics=None,
+        answer_metrics=None,
+    )
+
+    try:
+        build_benchmark_report(
+            [execution],
+            [],
+        )
+    except ValueError:
+        pass
+    else:
+        raise AssertionError(
+            "Debe rechazarse una cantidad desigual de ejecuciones y evaluaciones."
         )
