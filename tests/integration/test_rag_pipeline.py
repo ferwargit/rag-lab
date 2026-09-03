@@ -411,3 +411,61 @@ def test_rag_pipeline_abstention_execution_has_no_answer_metrics() -> None:
     assert execution.evidence_metrics.total_output_tokens > 0
 
     assert execution.answer_metrics is None
+
+
+@pytest.mark.integration
+def test_rag_pipeline_benchmark_execution_tracks_metrics_per_case() -> None:
+    cases = load_benchmark(BENCHMARK_PATH)
+
+    embedding_client = LocalEmbeddingClient()
+
+    store = JsonVectorStore(INDEX_PATH)
+    store.load()
+
+    retriever = Retriever(store)
+
+    evidence_evaluator = EvidenceEvaluator(
+        LocalChatClient()
+    )
+
+    chat_client = LocalChatClient()
+
+    pipeline = RAGPipeline(
+        embedding_client=embedding_client,
+        retriever=retriever,
+        evidence_evaluator=evidence_evaluator,
+        chat_client=chat_client,
+        top_k=3,
+    )
+
+    executions = run_benchmark_with_metrics(
+        [cases[0], cases[3]],
+        pipeline,
+    )
+
+    assert len(executions) == 2
+
+    answerable_execution = executions[0]
+    abstention_execution = executions[1]
+
+    assert answerable_execution.result.case_id == "q001"
+    assert answerable_execution.result.sufficient is True
+
+    assert answerable_execution.evidence_metrics is not None
+    assert answerable_execution.answer_metrics is not None
+
+    assert (
+        answerable_execution.evidence_metrics.total_output_tokens
+        > 0
+    )
+
+    assert (
+        answerable_execution.answer_metrics.total_output_tokens
+        > 0
+    )
+
+    assert abstention_execution.result.case_id == "q004"
+    assert abstention_execution.result.sufficient is False
+
+    assert abstention_execution.evidence_metrics is not None
+    assert abstention_execution.answer_metrics is None
