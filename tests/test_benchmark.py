@@ -10,6 +10,7 @@ from rag_lab.benchmark import (
     load_benchmark,
     run_and_evaluate_benchmark,
     run_benchmark,
+    run_benchmark_with_metrics,
 )
 from rag_lab.metrics import ExecutionMetrics
 from rag_lab.models import RAGResult
@@ -639,3 +640,108 @@ def test_build_benchmark_execution_allows_missing_answer_metrics() -> None:
     assert execution.result.sufficient is False
     assert execution.evidence_metrics == evidence_metrics
     assert execution.answer_metrics is None
+
+
+class FakeEvaluatorWithMetrics:
+    def __init__(
+        self,
+        metrics: ExecutionMetrics,
+    ) -> None:
+        self.last_metrics = metrics
+
+
+class FakePipelineWithMetrics:
+    def __init__(
+        self,
+        results: dict[str, RAGResult],
+        evidence_metrics: ExecutionMetrics,
+        answer_metrics: ExecutionMetrics | None,
+    ) -> None:
+        self.results = results
+        self.evidence_evaluator = FakeEvaluatorWithMetrics(
+            evidence_metrics
+        )
+        self.answer_metrics = answer_metrics
+        self.queries: list[str] = []
+
+    @property
+    def last_metrics(self) -> ExecutionMetrics | None:
+        return self.answer_metrics
+
+    def ask(self, query: str) -> RAGResult:
+        self.queries.append(query)
+        return self.results[query]
+
+
+def test_run_benchmark_with_metrics_captures_component_metrics() -> None:
+    cases = [
+        BenchmarkCase(
+            id="q001",
+            query="Pregunta 1",
+            answerable=True,
+            expected_chunk_ids=("knowledge-001",),
+            expected_answer_terms=("USB MIDI",),
+        ),
+        BenchmarkCase(
+            id="q004",
+            query="Pregunta 4",
+            answerable=False,
+            expected_chunk_ids=(),
+            expected_answer_terms=(),
+        ),
+    ]
+
+    evidence_metrics = ExecutionMetrics(
+        input_tokens=409,
+        total_output_tokens=26,
+        reasoning_output_tokens=0,
+        tokens_per_second=41.5,
+        time_to_first_token_seconds=0.28,
+    )
+
+    answer_metrics = ExecutionMetrics(
+        input_tokens=179,
+        total_output_tokens=28,
+        reasoning_output_tokens=0,
+        tokens_per_second=42.1,
+        time_to_first_token_seconds=0.32,
+    )
+
+    pipeline = FakePipelineWithMetrics(
+        results={
+            "Pregunta 1": RAGResult(
+                answer="Se conecta mediante USB MIDI.",
+                sufficient=True,
+                retrieved_chunk_ids=("knowledge-001",),
+                selected_chunk_ids=("knowledge-001",),
+            ),
+            "Pregunta 4": RAGResult(
+                answer="No tengo información suficiente.",
+                sufficient=False,
+                retrieved_chunk_ids=("knowledge-000",),
+                selected_chunk_ids=(),
+            ),
+        },
+        evidence_metrics=evidence_metrics,
+        answer_metrics=answer_metrics,
+    )
+
+    executions = run_benchmark_with_metrics(
+        cases,
+        pipeline,
+    )
+
+    assert len(executions) == 2
+
+    assert executions[0].case_id == "q001"
+    assert executions[0].evidence_metrics == evidence_metrics
+    assert executions[0].answer_metrics == answer_metrics
+
+    assert executions[1].case_id == "q004"
+    assert executions[1].evidence_metrics == evidence_metrics
+    assert executions[1].answer_metrics == answer_metrics
+
+    assert pipeline.queries == [
+        "Pregunta 1",
+        "Pregunta 4",
+    ]

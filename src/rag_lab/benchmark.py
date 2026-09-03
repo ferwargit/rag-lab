@@ -6,6 +6,11 @@ from rag_lab.answer_validation import validate_answer_terms
 from rag_lab.models import RAGResult
 from rag_lab.metrics import ExecutionMetrics
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from rag_lab.rag_pipeline import RAGPipeline
+
 @dataclass(frozen=True)
 class BenchmarkCase:
     id: str
@@ -160,3 +165,26 @@ def build_benchmark_execution(
     )
 
 
+def run_benchmark_with_metrics(
+    cases: Sequence[BenchmarkCase],
+    pipeline: "RAGPipeline",
+) -> list[BenchmarkExecution]:
+    """Ejecuta el benchmark y conserva las métricas de cada componente."""
+
+    executions: list[BenchmarkExecution] = []
+
+    for case in cases:
+        result = pipeline.ask(case.query)
+
+        execution = build_benchmark_execution(
+            case,
+            result,
+            evidence_metrics=(
+                pipeline.evidence_evaluator.last_metrics
+            ),
+            answer_metrics=pipeline.last_metrics,
+        )
+
+        executions.append(execution)
+
+    return executions
