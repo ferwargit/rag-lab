@@ -439,3 +439,64 @@ def test_rag_pipeline_abstains_when_generation_returns_empty_content() -> None:
     assert result.answer == ABSTENTION_MESSAGE
     assert result.retrieved_chunk_ids == ("knowledge-001",)
     assert result.selected_chunk_ids == ()
+
+
+def test_rag_pipeline_exposes_last_metrics() -> None:
+    from rag_lab.evidence_evaluator import EvidenceDecision
+    from rag_lab.generation import GenerationResult
+
+    retrieved = [
+        make_search_result(
+            "knowledge-001",
+            (
+                "El dispositivo MIDI se conecta al ordenador "
+                "mediante una interfaz USB MIDI."
+            ),
+            0.80,
+        )
+    ]
+
+    embedding_client = FakeEmbeddingClient()
+    retriever = FakeRetriever(retrieved)
+
+    evidence_evaluator = FakeEvidenceEvaluator(
+        EvidenceDecision(
+            sufficient=True,
+            selected_chunk_ids=("knowledge-001",),
+        )
+    )
+
+    generation = GenerationResult(
+        content="Se conecta mediante una interfaz USB MIDI.",
+        reasoning=None,
+        input_tokens=100,
+        total_output_tokens=12,
+        reasoning_output_tokens=0,
+        tokens_per_second=40.0,
+        time_to_first_token_seconds=0.2,
+    )
+
+    chat_client = FakeChatClient(
+        generation_result=generation,
+    )
+
+    pipeline = RAGPipeline(
+        embedding_client=embedding_client,
+        retriever=retriever,
+        evidence_evaluator=evidence_evaluator,
+        chat_client=chat_client,
+    )
+
+    assert pipeline.last_metrics is None
+
+    result = pipeline.ask(
+        "¿Cómo se conecta el piano al ordenador?"
+    )
+
+    assert result.sufficient is True
+    assert pipeline.last_metrics is not None
+    assert pipeline.last_metrics.input_tokens == 100
+    assert pipeline.last_metrics.total_output_tokens == 12
+    assert pipeline.last_metrics.reasoning_output_tokens == 0
+    assert pipeline.last_metrics.tokens_per_second == 40.0
+    assert pipeline.last_metrics.time_to_first_token_seconds == 0.2

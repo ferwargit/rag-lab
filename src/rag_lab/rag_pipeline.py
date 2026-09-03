@@ -1,3 +1,9 @@
+from rag_lab.generation import GenerationResult
+from rag_lab.inference import RAG_ANSWER_PROFILE
+from rag_lab.metrics import (
+    ExecutionMetrics,
+    metrics_from_generation,
+)
 from rag_lab.models import RAGResult
 from rag_lab.pipeline_utils import select_results
 from rag_lab.prompting import build_rag_messages
@@ -7,7 +13,6 @@ from rag_lab.providers import (
     EvidenceEvaluatorProvider,
     RetrieverProvider,
 )
-from rag_lab.inference import RAG_ANSWER_PROFILE
 
 
 ABSTENTION_MESSAGE = (
@@ -38,6 +43,18 @@ class RAGPipeline:
         self.evidence_evaluator = evidence_evaluator
         self.chat_client = chat_client
         self.top_k = top_k
+        self.last_generation: GenerationResult | None = None
+
+    @property
+    def last_metrics(self) -> ExecutionMetrics | None:
+        """Devuelve las métricas de la última generación de respuesta."""
+
+        if self.last_generation is None:
+            return None
+
+        return metrics_from_generation(
+            self.last_generation,
+        )
 
     def ask(self, query: str) -> RAGResult:
         """Ejecuta una consulta RAG completa."""
@@ -101,6 +118,8 @@ class RAGPipeline:
             messages,
             profile=RAG_ANSWER_PROFILE,
         )
+
+        self.last_generation = generation
 
         if not generation.content.strip():
             return RAGResult(
