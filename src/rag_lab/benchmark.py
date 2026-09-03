@@ -267,6 +267,87 @@ def summarize_benchmark_execution(
 
 
 @dataclass(frozen=True)
+class MetricsSummary:
+    """Resumen agregado de métricas de ejecución."""
+
+    sample_count: int
+    avg_input_tokens: float
+    avg_output_tokens: float
+    avg_reasoning_output_tokens: float
+    avg_tokens_per_second: float | None
+    avg_time_to_first_token_seconds: float | None
+
+
+def build_metrics_summary(
+    metrics: Sequence[ExecutionMetrics | None],
+) -> MetricsSummary:
+    """Calcula promedios a partir de métricas de ejecución."""
+
+    valid_metrics = [
+        metric
+        for metric in metrics
+        if metric is not None
+    ]
+
+    if not valid_metrics:
+        return MetricsSummary(
+            sample_count=0,
+            avg_input_tokens=0.0,
+            avg_output_tokens=0.0,
+            avg_reasoning_output_tokens=0.0,
+            avg_tokens_per_second=None,
+            avg_time_to_first_token_seconds=None,
+        )
+
+    return MetricsSummary(
+        sample_count=len(valid_metrics),
+        avg_input_tokens=(
+            sum(metric.input_tokens for metric in valid_metrics)
+            / len(valid_metrics)
+        ),
+        avg_output_tokens=(
+            sum(metric.total_output_tokens for metric in valid_metrics)
+            / len(valid_metrics)
+        ),
+        avg_reasoning_output_tokens=(
+            sum(
+                metric.reasoning_output_tokens
+                for metric in valid_metrics
+            )
+            / len(valid_metrics)
+        ),
+        avg_tokens_per_second=_average_optional_metric(
+            metric.tokens_per_second
+            for metric in valid_metrics
+        ),
+        avg_time_to_first_token_seconds=_average_optional_metric(
+            metric.time_to_first_token_seconds
+            for metric in valid_metrics
+        ),
+    )
+
+
+def _average_optional_metric(
+    values: Sequence[float | None],
+) -> float | None:
+    """Calcula el promedio ignorando valores None."""
+
+    valid_values = [
+        value
+        for value in values
+        if value is not None
+    ]
+
+    if not valid_values:
+        return None
+
+    return round(
+        sum(valid_values) / len(valid_values),
+        6,
+    )
+
+
+@dataclass(frozen=True)
 class BenchmarkReport:
     """Resultado global de una ejecución de benchmark."""
 
@@ -287,6 +368,20 @@ class BenchmarkReport:
             return 0.0
 
         return self.passed_cases / self.total_cases
+
+    @property
+    def evidence_metrics_summary(self) -> MetricsSummary:
+        return build_metrics_summary(
+            execution.evidence_metrics
+            for execution in self.executions
+        )
+
+    @property
+    def answer_metrics_summary(self) -> MetricsSummary:
+        return build_metrics_summary(
+            execution.answer_metrics
+            for execution in self.executions
+        )
 
 
 def build_benchmark_report(

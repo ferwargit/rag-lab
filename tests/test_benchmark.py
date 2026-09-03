@@ -5,9 +5,11 @@ from rag_lab.benchmark import (
     BenchmarkExecution,
     BenchmarkResult,
     BenchmarkReport,
+    MetricsSummary,
     build_benchmark_execution,
     build_benchmark_result,
     build_benchmark_report,
+    build_metrics_summary,
     evaluate_benchmark_case,
     load_benchmark,
     run_and_evaluate_benchmark,
@@ -1241,4 +1243,71 @@ def test_summarize_benchmark_execution_without_metrics() -> None:
 
     assert summary == (
         "q004 | PASS | sufficient=False | retrieved=1 | selected=0"
+    )
+
+
+def test_build_metrics_summary_calculates_averages() -> None:
+    metrics = [
+        ExecutionMetrics(
+            input_tokens=100,
+            total_output_tokens=20,
+            reasoning_output_tokens=4,
+            tokens_per_second=40.0,
+            time_to_first_token_seconds=0.20,
+        ),
+        ExecutionMetrics(
+            input_tokens=200,
+            total_output_tokens=30,
+            reasoning_output_tokens=6,
+            tokens_per_second=50.0,
+            time_to_first_token_seconds=0.40,
+        ),
+    ]
+
+    summary = build_metrics_summary(metrics)
+
+    assert summary == MetricsSummary(
+        sample_count=2,
+        avg_input_tokens=150.0,
+        avg_output_tokens=25.0,
+        avg_reasoning_output_tokens=5.0,
+        avg_tokens_per_second=45.0,
+        avg_time_to_first_token_seconds=0.30,
+    )
+
+
+def test_build_metrics_summary_ignores_none() -> None:
+    metrics = [
+        ExecutionMetrics(
+            input_tokens=100,
+            total_output_tokens=20,
+            reasoning_output_tokens=0,
+            tokens_per_second=40.0,
+            time_to_first_token_seconds=0.20,
+        ),
+        None,
+    ]
+
+    summary = build_metrics_summary(metrics)
+
+    assert summary == MetricsSummary(
+        sample_count=1,
+        avg_input_tokens=100.0,
+        avg_output_tokens=20.0,
+        avg_reasoning_output_tokens=0.0,
+        avg_tokens_per_second=40.0,
+        avg_time_to_first_token_seconds=0.20,
+    )
+
+
+def test_build_metrics_summary_handles_empty_input() -> None:
+    summary = build_metrics_summary([])
+
+    assert summary == MetricsSummary(
+        sample_count=0,
+        avg_input_tokens=0.0,
+        avg_output_tokens=0.0,
+        avg_reasoning_output_tokens=0.0,
+        avg_tokens_per_second=None,
+        avg_time_to_first_token_seconds=None,
     )
