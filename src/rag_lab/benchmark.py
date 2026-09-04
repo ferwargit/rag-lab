@@ -282,6 +282,18 @@ def summarize_benchmark_execution(
             )
         )
 
+    for stage_name, stage_time in execution.stage_execution_times_seconds:
+        display_name = {
+            "embedding": "Embedding",
+            "retrieval": "Retrieval",
+            "evidence": "Evidence",
+            "answer_generation": "Answer Generation",
+        }.get(stage_name, stage_name)
+
+        lines.append(
+            f"     {display_name:<18} | {stage_time:.2f} s"
+        )
+
     return "\n".join(lines)
 
 

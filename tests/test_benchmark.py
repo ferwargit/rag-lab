@@ -1272,6 +1272,12 @@ def test_summarize_benchmark_execution_includes_metrics() -> None:
         evidence_metrics=evidence_metrics,
         answer_metrics=answer_metrics,
         execution_time_seconds=2.50,
+        stage_execution_times_seconds=(
+            ("embedding", 0.10),
+            ("retrieval", 0.20),
+            ("evidence", 1.00),
+            ("answer_generation", 1.20),
+        ),
     )
 
     summary = summarize_benchmark_execution(
@@ -1291,6 +1297,11 @@ def test_summarize_benchmark_execution_includes_metrics() -> None:
     ) in summary
 
     assert "total=2.50 s" in summary
+
+    assert "Embedding          | 0.10 s" in summary
+    assert "Retrieval          | 0.20 s" in summary
+    assert "Evidence           | 1.00 s" in summary
+    assert "Answer Generation  | 1.20 s" in summary
 
     assert (
         "Answer   | "
@@ -1329,6 +1340,38 @@ def test_summarize_benchmark_execution_without_metrics() -> None:
     )
 
     assert "total=N/A" in summary
+
+
+def test_summarize_benchmark_execution_includes_only_executed_stages() -> None:
+    result = BenchmarkResult(
+        case_id="q004",
+        answer="No tengo información suficiente.",
+        sufficient=False,
+        retrieved_chunk_ids=("knowledge-000",),
+        selected_chunk_ids=(),
+    )
+
+    execution = BenchmarkExecution(
+        result=result,
+        evidence_metrics=None,
+        answer_metrics=None,
+        execution_time_seconds=2.50,
+        stage_execution_times_seconds=(
+            ("embedding", 0.10),
+            ("retrieval", 0.20),
+            ("evidence", 1.00),
+        ),
+    )
+
+    summary = summarize_benchmark_execution(
+        execution,
+        True,
+    )
+
+    assert "Embedding          | 0.10 s" in summary
+    assert "Retrieval          | 0.20 s" in summary
+    assert "Evidence           | 1.00 s" in summary
+    assert "Answer Generation" not in summary
 
 
 def test_build_metrics_summary_calculates_averages() -> None:
