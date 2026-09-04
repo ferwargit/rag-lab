@@ -41,6 +41,7 @@ class LocalChatClient:
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.timeout = timeout
+        self._model_capabilities: ModelCapabilities | None = None
 
     def generate(
         self,
@@ -75,7 +76,10 @@ class LocalChatClient:
                 "El único mensaje no-system debe tener role='user'."
             )
 
-        capabilities = self.get_model_capabilities()
+        if self._model_capabilities is None:
+            self._model_capabilities = self.get_model_capabilities()
+
+        capabilities = self._model_capabilities
 
         try:
             validate_profile(
