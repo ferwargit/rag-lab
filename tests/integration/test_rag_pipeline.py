@@ -295,6 +295,7 @@ def test_rag_pipeline_exposes_real_execution_metrics() -> None:
         evidence_evaluator=evidence_evaluator,
         chat_client=chat_client,
         top_k=3,
+        mode="two_call",
     )
 
     result = pipeline.ask(
@@ -341,6 +342,7 @@ def test_rag_pipeline_benchmark_execution_contains_real_metrics() -> None:
         evidence_evaluator=evidence_evaluator,
         chat_client=chat_client,
         top_k=3,
+        mode="two_call",
     )
 
     executions = run_benchmark_with_metrics(
@@ -397,6 +399,7 @@ def test_rag_pipeline_abstention_execution_has_no_answer_metrics() -> None:
         evidence_evaluator=evidence_evaluator,
         chat_client=chat_client,
         top_k=3,
+        mode="two_call",
     )
 
     executions = run_benchmark_with_metrics(
@@ -442,6 +445,7 @@ def test_rag_pipeline_benchmark_execution_tracks_metrics_per_case() -> None:
         evidence_evaluator=evidence_evaluator,
         chat_client=chat_client,
         top_k=3,
+        mode="two_call",
     )
 
     executions = run_benchmark_with_metrics(
@@ -545,6 +549,7 @@ def test_rag_pipeline_end_to_end_returns_instrumented_benchmark_report() -> None
         evidence_evaluator=evidence_evaluator,
         chat_client=chat_client,
         top_k=3,
+        mode="two_call",
     )
 
     report = run_full_benchmark_with_metrics(

@@ -190,6 +190,8 @@ def run_benchmark_with_metrics(
             result,
             evidence_metrics=(
                 pipeline.evidence_evaluator.last_metrics
+                if pipeline.evidence_evaluator is not None
+                else None
             ),
             answer_metrics=pipeline.last_metrics,
             execution_time_seconds=(
