@@ -483,6 +483,7 @@ def test_benchmark_execution_stores_component_metrics() -> None:
         reasoning_output_tokens=0,
         tokens_per_second=41.5,
         time_to_first_token_seconds=0.28,
+        generation_time_seconds=1.25,
     )
 
     answer_metrics = ExecutionMetrics(
@@ -491,12 +492,14 @@ def test_benchmark_execution_stores_component_metrics() -> None:
         reasoning_output_tokens=0,
         tokens_per_second=42.1,
         time_to_first_token_seconds=0.32,
+        generation_time_seconds=1.25,
     )
 
     execution = BenchmarkExecution(
         result=result,
         evidence_metrics=evidence_metrics,
         answer_metrics=answer_metrics,
+        execution_time_seconds=2.50,
     )
 
     assert execution.result.case_id == "q001"
@@ -520,12 +523,14 @@ def test_benchmark_execution_allows_missing_answer_metrics() -> None:
         reasoning_output_tokens=0,
         tokens_per_second=41.2,
         time_to_first_token_seconds=0.27,
+        generation_time_seconds=1.25,
     )
 
     execution = BenchmarkExecution(
         result=result,
         evidence_metrics=evidence_metrics,
         answer_metrics=None,
+        execution_time_seconds=None,
     )
 
     assert execution.evidence_metrics == evidence_metrics
@@ -543,6 +548,7 @@ def test_benchmark_execution_is_immutable() -> None:
         ),
         evidence_metrics=None,
         answer_metrics=None,
+        execution_time_seconds=None,
     )
 
     try:
@@ -582,6 +588,7 @@ def test_build_benchmark_execution_combines_result_and_metrics() -> None:
         reasoning_output_tokens=0,
         tokens_per_second=41.5,
         time_to_first_token_seconds=0.28,
+        generation_time_seconds=1.25,
     )
 
     answer_metrics = ExecutionMetrics(
@@ -590,6 +597,7 @@ def test_build_benchmark_execution_combines_result_and_metrics() -> None:
         reasoning_output_tokens=0,
         tokens_per_second=42.1,
         time_to_first_token_seconds=0.32,
+        generation_time_seconds=1.25,
     )
 
     execution = build_benchmark_execution(
@@ -597,6 +605,7 @@ def test_build_benchmark_execution_combines_result_and_metrics() -> None:
         result,
         evidence_metrics=evidence_metrics,
         answer_metrics=answer_metrics,
+        execution_time_seconds=2.50,
     )
 
     assert execution.result.case_id == "q001"
@@ -633,6 +642,7 @@ def test_build_benchmark_execution_allows_missing_answer_metrics() -> None:
         reasoning_output_tokens=0,
         tokens_per_second=41.2,
         time_to_first_token_seconds=0.27,
+        generation_time_seconds=1.25,
     )
 
     execution = build_benchmark_execution(
@@ -640,12 +650,14 @@ def test_build_benchmark_execution_allows_missing_answer_metrics() -> None:
         result,
         evidence_metrics=evidence_metrics,
         answer_metrics=None,
+        execution_time_seconds=1.50,
     )
 
     assert execution.result.case_id == "q004"
     assert execution.result.sufficient is False
     assert execution.evidence_metrics == evidence_metrics
     assert execution.answer_metrics is None
+    assert execution.execution_time_seconds == 1.50
 
 
 class FakeEvaluatorWithMetrics:
@@ -672,6 +684,7 @@ class FakePipelineWithMetrics:
         )
 
         self._last_metrics: ExecutionMetrics | None = None
+        self.last_execution_time_seconds = 2.50
         self.queries: list[str] = []
 
     @property
@@ -714,6 +727,7 @@ def test_run_benchmark_with_metrics_captures_metrics_per_query() -> None:
         reasoning_output_tokens=0,
         tokens_per_second=41.5,
         time_to_first_token_seconds=0.28,
+        generation_time_seconds=1.25,
     )
 
     q001_answer_metrics = ExecutionMetrics(
@@ -722,6 +736,7 @@ def test_run_benchmark_with_metrics_captures_metrics_per_query() -> None:
         reasoning_output_tokens=0,
         tokens_per_second=42.1,
         time_to_first_token_seconds=0.32,
+        generation_time_seconds=1.25,
     )
 
     q004_evidence_metrics = ExecutionMetrics(
@@ -730,6 +745,7 @@ def test_run_benchmark_with_metrics_captures_metrics_per_query() -> None:
         reasoning_output_tokens=0,
         tokens_per_second=41.2,
         time_to_first_token_seconds=0.27,
+        generation_time_seconds=1.25,
     )
 
     pipeline = FakePipelineWithMetrics(
@@ -800,6 +816,7 @@ def test_summarize_benchmark_execution_reports_pass() -> None:
         ),
         evidence_metrics=None,
         answer_metrics=None,
+        execution_time_seconds=None,
     )
 
     summary = summarize_benchmark_execution(
@@ -828,6 +845,7 @@ def test_summarize_benchmark_execution_reports_fail() -> None:
         ),
         evidence_metrics=None,
         answer_metrics=None,
+        execution_time_seconds=None,
     )
 
     summary = summarize_benchmark_execution(
@@ -852,6 +870,7 @@ def test_benchmark_report_calculates_summary() -> None:
         ),
         evidence_metrics=None,
         answer_metrics=None,
+        execution_time_seconds=None,
     )
 
     execution_2 = BenchmarkExecution(
@@ -864,6 +883,7 @@ def test_benchmark_report_calculates_summary() -> None:
         ),
         evidence_metrics=None,
         answer_metrics=None,
+        execution_time_seconds=None,
     )
 
     report = BenchmarkReport(
@@ -920,6 +940,7 @@ def test_build_benchmark_report_creates_report() -> None:
         ),
         evidence_metrics=None,
         answer_metrics=None,
+        execution_time_seconds=None,
     )
 
     report = build_benchmark_report(
@@ -945,6 +966,7 @@ def test_build_benchmark_report_rejects_mismatched_lengths() -> None:
         ),
         evidence_metrics=None,
         answer_metrics=None,
+        execution_time_seconds=None,
     )
 
     try:
@@ -1033,6 +1055,7 @@ def test_run_full_benchmark_with_metrics_returns_report() -> None:
         reasoning_output_tokens=0,
         tokens_per_second=41.5,
         time_to_first_token_seconds=0.28,
+        generation_time_seconds=1.25,
     )
 
     answer_metrics_q001 = ExecutionMetrics(
@@ -1041,6 +1064,7 @@ def test_run_full_benchmark_with_metrics_returns_report() -> None:
         reasoning_output_tokens=0,
         tokens_per_second=42.1,
         time_to_first_token_seconds=0.32,
+        generation_time_seconds=1.25,
     )
 
     evidence_metrics_q004 = ExecutionMetrics(
@@ -1049,6 +1073,7 @@ def test_run_full_benchmark_with_metrics_returns_report() -> None:
         reasoning_output_tokens=0,
         tokens_per_second=41.2,
         time_to_first_token_seconds=0.27,
+        generation_time_seconds=1.25,
     )
 
     pipeline = FakePipelineWithMetrics(
@@ -1126,6 +1151,7 @@ def test_format_benchmark_report_returns_readable_summary() -> None:
         ),
         evidence_metrics=None,
         answer_metrics=None,
+        execution_time_seconds=None,
     )
 
     execution_2 = BenchmarkExecution(
@@ -1138,6 +1164,7 @@ def test_format_benchmark_report_returns_readable_summary() -> None:
         ),
         evidence_metrics=None,
         answer_metrics=None,
+        execution_time_seconds=None,
     )
 
     report = BenchmarkReport(
@@ -1198,6 +1225,7 @@ def test_summarize_benchmark_execution_includes_metrics() -> None:
         reasoning_output_tokens=0,
         tokens_per_second=41.5,
         time_to_first_token_seconds=0.28,
+        generation_time_seconds=1.25,
     )
 
     answer_metrics = ExecutionMetrics(
@@ -1206,12 +1234,14 @@ def test_summarize_benchmark_execution_includes_metrics() -> None:
         reasoning_output_tokens=0,
         tokens_per_second=42.1,
         time_to_first_token_seconds=0.32,
+        generation_time_seconds=1.25,
     )
 
     execution = BenchmarkExecution(
         result=result,
         evidence_metrics=evidence_metrics,
         answer_metrics=answer_metrics,
+        execution_time_seconds=1.25,
     )
 
     summary = summarize_benchmark_execution(
@@ -1253,6 +1283,7 @@ def test_summarize_benchmark_execution_without_metrics() -> None:
         result=result,
         evidence_metrics=None,
         answer_metrics=None,
+        execution_time_seconds=None,
     )
 
     summary = summarize_benchmark_execution(
@@ -1273,6 +1304,7 @@ def test_build_metrics_summary_calculates_averages() -> None:
             reasoning_output_tokens=4,
             tokens_per_second=40.0,
             time_to_first_token_seconds=0.20,
+            generation_time_seconds=1.25,
         ),
         ExecutionMetrics(
             input_tokens=200,
@@ -1280,6 +1312,7 @@ def test_build_metrics_summary_calculates_averages() -> None:
             reasoning_output_tokens=6,
             tokens_per_second=50.0,
             time_to_first_token_seconds=0.40,
+            generation_time_seconds=1.25,
         ),
     ]
 
@@ -1303,6 +1336,7 @@ def test_build_metrics_summary_ignores_none() -> None:
             reasoning_output_tokens=0,
             tokens_per_second=40.0,
             time_to_first_token_seconds=0.20,
+            generation_time_seconds=1.25,
         ),
         None,
     ]
@@ -1355,6 +1389,7 @@ def test_benchmark_report_exposes_metrics_summaries() -> None:
         reasoning_output_tokens=0,
         tokens_per_second=40.0,
         time_to_first_token_seconds=0.20,
+        generation_time_seconds=1.25,
     )
 
     answer_metrics_q001 = ExecutionMetrics(
@@ -1363,6 +1398,7 @@ def test_benchmark_report_exposes_metrics_summaries() -> None:
         reasoning_output_tokens=0,
         tokens_per_second=50.0,
         time_to_first_token_seconds=0.10,
+        generation_time_seconds=1.25,
     )
 
     evidence_metrics_q004 = ExecutionMetrics(
@@ -1371,6 +1407,7 @@ def test_benchmark_report_exposes_metrics_summaries() -> None:
         reasoning_output_tokens=0,
         tokens_per_second=60.0,
         time_to_first_token_seconds=0.40,
+        generation_time_seconds=1.25,
     )
 
     executions = [
@@ -1378,11 +1415,14 @@ def test_benchmark_report_exposes_metrics_summaries() -> None:
             result=result_q001,
             evidence_metrics=evidence_metrics_q001,
             answer_metrics=answer_metrics_q001,
+            execution_time_seconds=None,
+
         ),
         BenchmarkExecution(
             result=result_q004,
             evidence_metrics=evidence_metrics_q004,
             answer_metrics=None,
+            execution_time_seconds=None,
         ),
     ]
 
@@ -1462,3 +1502,30 @@ def test_format_metrics_summary_handles_missing_metrics() -> None:
         "Avg speed: N/A",
         "Avg TTFT: N/A",
     ]
+
+
+def test_build_benchmark_execution_stores_execution_time() -> None:
+    case = BenchmarkCase(
+        id="q001",
+        query="Pregunta",
+        answerable=True,
+        expected_chunk_ids=("knowledge-001",),
+        expected_answer_terms=("USB MIDI",),
+    )
+
+    result = RAGResult(
+        answer="Respuesta",
+        sufficient=True,
+        retrieved_chunk_ids=("knowledge-001",),
+        selected_chunk_ids=("knowledge-001",),
+    )
+
+    execution = build_benchmark_execution(
+        case,
+        result,
+        evidence_metrics=None,
+        answer_metrics=None,
+        execution_time_seconds=1.37,
+    )
+
+    assert execution.execution_time_seconds == 1.37
