@@ -7,6 +7,10 @@ from rag_lab.inference import RAG_ANSWER_PROFILE
 from rag_lab.prompting import build_rag_messages
 from rag_lab.retrieval import SearchResult
 from rag_lab.providers import ChatGenerator
+from rag_lab.metrics import (
+    ExecutionMetrics,
+    metrics_from_generation,
+)
 
 
 SINGLE_CALL_SYSTEM_INSTRUCTION = """Eres un asistente RAG.
@@ -57,6 +61,16 @@ class SingleCallRAG:
     def __init__(self, client: ChatGenerator) -> None:
         self.client = client
         self.last_generation: GenerationResult | None = None
+
+    @property
+    def last_metrics(self) -> ExecutionMetrics | None:
+        """Devuelve las métricas de la última generación."""
+        if self.last_generation is None:
+            return None
+
+        return metrics_from_generation(
+            self.last_generation,
+        )
 
     def run(
         self,
