@@ -1154,3 +1154,35 @@ def test_rag_pipeline_two_call_requires_evidence_evaluator() -> None:
             chat_client=DummyChatClient(),
             mode="two_call",
         )
+
+
+def test_rag_pipeline_single_call_abstains_when_retrieval_returns_no_results() -> None:
+    embedding_client = FakeEmbeddingClient()
+    retriever = FakeRetriever([])
+
+    chat_client = FakeChatClient(
+        GenerationResult(
+            content='{"sufficient": true, "answer": "NO DEBERÍA GENERARSE"}',
+            reasoning=None,
+            input_tokens=0,
+            total_output_tokens=0,
+            reasoning_output_tokens=0,
+            tokens_per_second=None,
+            time_to_first_token_seconds=None,
+            generation_time_seconds=0.0,
+        )
+    )
+
+    pipeline = RAGPipeline(
+        embedding_client=embedding_client,
+        retriever=retriever,
+        chat_client=chat_client,
+        mode="single_call",
+    )
+
+    result = pipeline.ask("Pregunta sin resultados")
+
+    assert result.sufficient is False
+    assert result.selected_chunk_ids == ()
+    assert result.answer == ABSTENTION_MESSAGE
+    assert len(chat_client.calls) == 0
