@@ -826,7 +826,7 @@ def test_summarize_benchmark_execution_reports_pass() -> None:
 
     assert summary == (
         "q001 | PASS | sufficient=True | "
-        "retrieved=2 | selected=1"
+        "retrieved=2 | selected=1 | total=N/A"
     )
 
 
@@ -855,7 +855,7 @@ def test_summarize_benchmark_execution_reports_fail() -> None:
 
     assert summary == (
         "q002 | FAIL | sufficient=True | "
-        "retrieved=1 | selected=1"
+        "retrieved=1 | selected=1 | total=N/A"
     )
 
 
@@ -1187,8 +1187,8 @@ def test_format_benchmark_report_returns_readable_summary() -> None:
         "Passed: 2\n"
         "Accuracy: 100.00%\n"
         "\n"
-        "q001 | PASS | sufficient=True | retrieved=1 | selected=1\n"
-        "q004 | PASS | sufficient=False | retrieved=1 | selected=0\n"
+        "q001 | PASS | sufficient=True | retrieved=1 | selected=1 | total=N/A\n"
+        "q004 | PASS | sufficient=False | retrieved=1 | selected=0 | total=N/A\n"
         "\n"
         "Evidence Evaluator\n"
         "------------------\n"
@@ -1241,7 +1241,7 @@ def test_summarize_benchmark_execution_includes_metrics() -> None:
         result=result,
         evidence_metrics=evidence_metrics,
         answer_metrics=answer_metrics,
-        execution_time_seconds=1.25,
+        execution_time_seconds=2.50,
     )
 
     summary = summarize_benchmark_execution(
@@ -1259,6 +1259,8 @@ def test_summarize_benchmark_execution_includes_metrics() -> None:
         "speed=41.50 tok/s | "
         "TTFT=0.28 s"
     ) in summary
+
+    assert "total=2.50 s" in summary
 
     assert (
         "Answer   | "
@@ -1292,8 +1294,11 @@ def test_summarize_benchmark_execution_without_metrics() -> None:
     )
 
     assert summary == (
-        "q004 | PASS | sufficient=False | retrieved=1 | selected=0"
+        "q004 | PASS | sufficient=False | "
+        "retrieved=1 | selected=0 | total=N/A"
     )
+
+    assert "total=N/A" in summary
 
 
 def test_build_metrics_summary_calculates_averages() -> None:

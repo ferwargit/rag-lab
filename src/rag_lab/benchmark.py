@@ -207,13 +207,20 @@ def summarize_benchmark_execution(
 
     status = "PASS" if passed else "FAIL"
 
+    total_time = (
+        f"{execution.execution_time_seconds:.2f} s"
+        if execution.execution_time_seconds is not None
+        else "N/A"
+    )
+
     lines = [
         (
             f"{execution.result.case_id} | "
             f"{status} | "
             f"sufficient={execution.result.sufficient} | "
             f"retrieved={len(execution.result.retrieved_chunk_ids)} | "
-            f"selected={len(execution.result.selected_chunk_ids)}"
+            f"selected={len(execution.result.selected_chunk_ids)} | "
+            f"total={total_time}"
         ),
     ]
 
