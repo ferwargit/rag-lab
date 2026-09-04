@@ -15,6 +15,7 @@ from rag_lab.generation import LocalChatClient
 from rag_lab.rag_pipeline import RAGPipeline
 from rag_lab.retrieval import Retriever
 from rag_lab.vector_store import JsonVectorStore
+from rag_lab.single_call import SingleCallRAG
 
 
 BENCHMARK_PATH = Path("data/benchmark.json")
