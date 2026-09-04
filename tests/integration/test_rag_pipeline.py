@@ -368,6 +368,9 @@ def test_rag_pipeline_benchmark_execution_contains_real_metrics() -> None:
     assert execution.evidence_metrics.tokens_per_second is not None
     assert execution.answer_metrics.tokens_per_second is not None
 
+    assert execution.evidence_metrics.generation_time_seconds > 0
+    assert execution.answer_metrics.generation_time_seconds > 0
+
 
 @pytest.mark.integration
 def test_rag_pipeline_abstention_execution_has_no_answer_metrics() -> None:
@@ -411,6 +414,7 @@ def test_rag_pipeline_abstention_execution_has_no_answer_metrics() -> None:
 
     assert execution.evidence_metrics is not None
     assert execution.evidence_metrics.total_output_tokens > 0
+    assert execution.evidence_metrics.generation_time_seconds > 0
 
     assert execution.answer_metrics is None
 
