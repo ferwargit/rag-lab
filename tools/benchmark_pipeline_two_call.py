@@ -15,7 +15,6 @@ from rag_lab.generation import LocalChatClient
 from rag_lab.rag_pipeline import RAGPipeline
 from rag_lab.retrieval import Retriever
 from rag_lab.vector_store import JsonVectorStore
-from rag_lab.single_call import SingleCallRAG
 
 
 BENCHMARK_PATH = Path("data/benchmark.json")
@@ -50,18 +49,12 @@ def main() -> None:
     evidence_evaluator = EvidenceEvaluator(LocalChatClient())
     chat_client = LocalChatClient()
 
-    single_call_rag = SingleCallRAG(
-    LocalChatClient(),
-    )
-
     pipeline = RAGPipeline(
         embedding_client=embedding_client,
         retriever=retriever,
         evidence_evaluator=evidence_evaluator,
         chat_client=chat_client,
         top_k=3,
-        mode="single_call",
-        single_call_rag=single_call_rag,
     )
 
     stop_event = threading.Event()
