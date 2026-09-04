@@ -18,7 +18,7 @@ from rag_lab.vector_store import JsonVectorStore
 from rag_lab.single_call import SingleCallRAG
 
 
-BENCHMARK_PATH = Path("data/benchmark.json")
+BENCHMARK_PATH = Path("data/benchmark_adversarial.json")
 INDEX_PATH = Path("storage/index.json")
 
 
