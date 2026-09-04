@@ -1648,3 +1648,41 @@ def test_benchmark_report_formats_single_call_metrics_with_single_call_label() -
     assert "Single Call" in formatted
     assert "Answer Generation" not in formatted
     assert "single_call" in formatted
+
+
+def test_benchmark_report_formats_single_call_case_metrics_with_single_call_label() -> None:
+    execution = BenchmarkExecution(
+        result=BenchmarkResult(
+            case_id="q001",
+            answer="Respuesta",
+            sufficient=True,
+            retrieved_chunk_ids=("knowledge-001",),
+            selected_chunk_ids=("knowledge-001",),
+        ),
+        evidence_metrics=None,
+        answer_metrics=ExecutionMetrics(
+            input_tokens=120,
+            total_output_tokens=18,
+            reasoning_output_tokens=0,
+            tokens_per_second=41.5,
+            time_to_first_token_seconds=0.25,
+            generation_time_seconds=1.75,
+        ),
+        execution_time_seconds=2.0,
+        stage_execution_times_seconds=(
+            ("embedding", 0.5),
+            ("retrieval", 0.0),
+            ("single_call", 1.5),
+        ),
+    )
+
+    report = build_benchmark_report(
+        [execution],
+        [True],
+        mode="single_call",
+    )
+
+    formatted = format_benchmark_report(report)
+
+    assert "     Single Call | input=120" in formatted
+    assert "     Answer   | input=120" not in formatted

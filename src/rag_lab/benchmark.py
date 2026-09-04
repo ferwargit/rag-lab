@@ -210,6 +210,8 @@ def run_benchmark_with_metrics(
 def summarize_benchmark_execution(
     execution: BenchmarkExecution,
     passed: bool,
+    *,
+    mode: str = "two_call",
 ) -> str:
     """Genera un resumen textual de una ejecución."""
 
@@ -274,9 +276,11 @@ def summarize_benchmark_execution(
             else "N/A"
         )
 
+        label = "Single Call" if mode == "single_call" else "Answer"
+
         lines.append(
             (
-                f"     Answer   | "
+                f"     {label:<10} | "
                 f"input={metrics.input_tokens} | "
                 f"output={metrics.total_output_tokens} | "
                 f"reasoning={metrics.reasoning_output_tokens} | "
@@ -553,6 +557,7 @@ def format_benchmark_report(
         summarize_benchmark_execution(
             execution,
             passed,
+            mode=report.mode,
         )
         for execution, passed in zip(
             report.executions,
