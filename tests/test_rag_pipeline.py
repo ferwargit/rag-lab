@@ -673,3 +673,30 @@ def test_rag_pipeline_records_execution_time_for_full_pipeline() -> None:
 
     assert pipeline.last_execution_time_seconds is not None
     assert pipeline.last_execution_time_seconds > 0
+
+
+def test_rag_pipeline_records_stage_execution_times() -> None:
+    pipeline = RAGPipeline(
+        embedding_client=FakeEmbeddingClient(),
+        retriever=FakeRetriever(),
+        evidence_evaluator=FakeEvidenceEvaluator(),
+        chat_client=FakeChatClient(),
+    )
+
+    result = pipeline.ask("¿Cómo se conecta el piano por MIDI?")
+
+    assert result.answer
+    assert pipeline.last_execution_time_seconds is not None
+    assert pipeline.last_execution_time_seconds > 0
+
+    stage_times = pipeline.last_stage_execution_times_seconds
+
+    assert "embedding" in stage_times
+    assert "retrieval" in stage_times
+    assert "evidence" in stage_times
+    assert "answer_generation" in stage_times
+
+    assert stage_times["embedding"] >= 0
+    assert stage_times["retrieval"] >= 0
+    assert stage_times["evidence"] >= 0
+    assert stage_times["answer_generation"] >= 0

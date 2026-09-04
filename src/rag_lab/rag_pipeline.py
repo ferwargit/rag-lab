@@ -47,6 +47,7 @@ class RAGPipeline:
         self.top_k = top_k
         self.last_generation: GenerationResult | None = None
         self.last_execution_time_seconds: float | None = None
+        self.last_stage_execution_times_seconds: dict[str, float] = {}
 
     @property
     def last_metrics(self) -> ExecutionMetrics | None:
@@ -66,16 +67,29 @@ class RAGPipeline:
 
         self.last_generation = None
         self.last_execution_time_seconds = None
+        self.last_stage_execution_times_seconds = {}
 
         try:
+            stage_start = time.perf_counter()
+
             query_embedding = tuple(
                 self.embedding_client.embed(query)
             )
+
+            self.last_stage_execution_times_seconds["embedding"] = (
+                time.perf_counter() - stage_start
+            )
+
+            stage_start = time.perf_counter()
             
             results = self.retriever.search(
                 query_embedding,
                 top_k=self.top_k,
                 score_threshold=None,
+            )
+
+            self.last_stage_execution_times_seconds["retrieval"] = (
+                time.perf_counter() - stage_start
             )
             
             if not results:
@@ -86,9 +100,12 @@ class RAGPipeline:
                     selected_chunk_ids=(),
                 )
             
-            decision = self.evidence_evaluator.evaluate(
-                query,
-                results,
+            stage_start = time.perf_counter()
+
+            decision = self.evidence_evaluator.evaluate(query, results)
+
+            self.last_stage_execution_times_seconds["evidence"] = (
+                time.perf_counter() - stage_start
             )
             
             if not decision.sufficient:
@@ -122,10 +139,16 @@ class RAGPipeline:
                 query,
                 selected_results,
             )
+
+            stage_start = time.perf_counter()
             
             generation = self.chat_client.generate(
                 messages,
                 profile=RAG_ANSWER_PROFILE,
+            )
+
+            self.last_stage_execution_times_seconds["answer_generation"] = (
+                time.perf_counter() - stage_start
             )
             
             self.last_generation = generation
