@@ -2,8 +2,10 @@ import pytest
 
 from rag_lab.generation import GenerationResult
 from rag_lab.inference import InferenceProfile
-from rag_lab.models import EmbeddedChunk
+from rag_lab.models import EmbeddedChunk, DocumentChunk
+from rag_lab.single_call import SingleCallRAG, SingleCallResult
 from rag_lab.retrieval import SearchResult
+
 
 
 class FakeChatClient:
@@ -333,3 +335,26 @@ def test_single_call_false_does_not_select_chunks() -> None:
 
     # La decisión insuficiente no debe permitir selección.
     assert result.selected_chunk_ids == ()
+
+
+def test_single_call_keeps_last_generation_when_json_is_invalid() -> None:
+    client = FakeChatClient('{"sufficient": true,')
+    runner = SingleCallRAG(client)
+
+    results = (
+        SearchResult(
+            chunk=DocumentChunk(
+                id="knowledge-001",
+                text="El piano digital envía eventos MIDI.",
+                source="knowledge.txt",
+                index=0,
+            ),
+            score=1.0,
+        ),
+    )
+
+    with pytest.raises(ValueError):
+        runner.run("¿Cómo se conecta el piano?", results)
+
+    assert runner.last_generation is not None
+    assert runner.last_generation.content == '{"sufficient": true,'
