@@ -15,6 +15,8 @@ from rag_lab.providers import (
     EvidenceEvaluatorProvider,
     RetrieverProvider,
 )
+from typing import Literal
+from rag_lab.single_call import SingleCallRAG
 
 
 ABSTENTION_MESSAGE = (
@@ -34,10 +36,22 @@ class RAGPipeline:
         chat_client: ChatGenerator,
         *,
         top_k: int = 3,
+        mode: Literal["two_call", "single_call"] = "two_call",
+        single_call_rag: SingleCallRAG | None = None,
 ) -> None:
         if top_k <= 0:
             raise ValueError(
                 "top_k debe ser mayor que cero."
+            )
+
+        if mode not in ("two_call", "single_call"):
+            raise ValueError(
+                "mode debe ser 'two_call' o 'single_call'."
+            )
+
+        if mode == "single_call" and single_call_rag is None:
+            raise ValueError(
+                "single_call_rag es obligatorio cuando mode='single_call'."
             )
 
         self.embedding_client = embedding_client
@@ -45,6 +59,8 @@ class RAGPipeline:
         self.evidence_evaluator = evidence_evaluator
         self.chat_client = chat_client
         self.top_k = top_k
+        self.mode = mode
+        self.single_call_rag = single_call_rag
         self.last_generation: GenerationResult | None = None
         self.last_execution_time_seconds: float | None = None
         self.last_stage_execution_times_seconds: dict[str, float] = {}

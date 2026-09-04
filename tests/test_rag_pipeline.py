@@ -130,6 +130,66 @@ def test_rag_pipeline_stores_dependencies() -> None:
     assert pipeline.top_k == 3
 
 
+def test_rag_pipeline_defaults_to_two_call_mode() -> None:
+    pipeline = RAGPipeline(
+        embedding_client=DummyEmbeddingClient(),
+        retriever=DummyRetriever(),
+        evidence_evaluator=DummyEvidenceEvaluator(),
+        chat_client=DummyChatClient(),
+    )
+
+    assert pipeline.mode == "two_call"
+    assert pipeline.single_call_rag is None
+
+
+def test_rag_pipeline_accepts_single_call_mode() -> None:
+    from rag_lab.single_call import SingleCallRAG
+
+    single_call_rag = SingleCallRAG(
+        DummyChatClient(),
+    )
+
+    pipeline = RAGPipeline(
+        embedding_client=DummyEmbeddingClient(),
+        retriever=DummyRetriever(),
+        evidence_evaluator=DummyEvidenceEvaluator(),
+        chat_client=DummyChatClient(),
+        mode="single_call",
+        single_call_rag=single_call_rag,
+    )
+
+    assert pipeline.mode == "single_call"
+    assert pipeline.single_call_rag is single_call_rag
+
+
+def test_rag_pipeline_rejects_invalid_mode() -> None:
+    with pytest.raises(
+        ValueError,
+        match="mode debe ser 'two_call' o 'single_call'",
+    ):
+        RAGPipeline(
+            embedding_client=DummyEmbeddingClient(),
+            retriever=DummyRetriever(),
+            evidence_evaluator=DummyEvidenceEvaluator(),
+            chat_client=DummyChatClient(),
+            mode="invalid",
+        )
+
+
+def test_rag_pipeline_requires_single_call_rag_for_single_call_mode() -> None:
+    with pytest.raises(
+        ValueError,
+        match="single_call_rag es obligatorio",
+    ):
+        RAGPipeline(
+            embedding_client=DummyEmbeddingClient(),
+            retriever=DummyRetriever(),
+            evidence_evaluator=DummyEvidenceEvaluator(),
+            chat_client=DummyChatClient(),
+            mode="single_call",
+        )
+
+
 def test_rag_pipeline_rejects_invalid_top_k() -> None:
     with pytest.raises(
         ValueError,
