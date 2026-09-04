@@ -903,3 +903,124 @@ def test_rag_pipeline_single_call_mode_uses_single_call_only() -> None:
 
     assert pipeline.last_generation is generation
     assert "single_call" in pipeline.last_stage_execution_times_seconds
+
+
+def test_rag_pipeline_single_call_provider_failure_keeps_observability_state_consistent() -> None:
+    from rag_lab.single_call import SingleCallRAG
+
+    retrieved = [
+        make_search_result(
+            "knowledge-001",
+            (
+                "El dispositivo MIDI se conecta al ordenador "
+                "mediante una interfaz USB MIDI."
+            ),
+            0.80,
+        )
+    ]
+
+    class FailingSingleCall:
+        def run(self, query, results):
+            raise RuntimeError("LM Studio no disponible")
+
+    pipeline = RAGPipeline(
+        embedding_client=FakeEmbeddingClient(),
+        retriever=FakeRetriever(retrieved),
+        evidence_evaluator=DummyEvidenceEvaluator(),
+        chat_client=DummyChatClient(),
+        mode="single_call",
+        single_call_rag=FailingSingleCall(),
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match="LM Studio no disponible",
+    ):
+        pipeline.ask("¿Cómo se conecta el piano?")
+
+    assert pipeline.last_generation is None
+    assert pipeline.last_metrics is None
+    assert pipeline.last_execution_time_seconds is not None
+    assert pipeline.last_execution_time_seconds > 0
+    assert "embedding" in pipeline.last_stage_execution_times_seconds
+    assert "retrieval" in pipeline.last_stage_execution_times_seconds
+    assert "single_call" not in pipeline.last_stage_execution_times_seconds
+
+
+def test_rag_pipeline_single_call_exposes_last_metrics() -> None:
+    from rag_lab.single_call import SingleCallRAG
+
+    retrieved = [
+        make_search_result(
+            "knowledge-001",
+            (
+                "El dispositivo MIDI se conecta al ordenador "
+                "mediante una interfaz USB MIDI."
+            ),
+            0.80,
+        )
+    ]
+
+    generation = GenerationResult(
+        content=(
+            '{"sufficient": true, '
+            '"answer": "Se conecta mediante una interfaz USB MIDI."}'
+        ),
+        reasoning=None,
+        input_tokens=120,
+        total_output_tokens=18,
+        reasoning_output_tokens=0,
+        tokens_per_second=41.5,
+        time_to_first_token_seconds=0.25,
+        generation_time_seconds=1.75,
+    )
+
+    class FakeSingleCallClient:
+        def __init__(self) -> None:
+            self.calls = []
+
+        def generate(self, messages, *, profile):
+            self.calls.append(
+                {
+                    "messages": messages,
+                    "profile": profile,
+                }
+            )
+            return generation
+
+    single_call_rag = SingleCallRAG(
+        FakeSingleCallClient(),
+    )
+
+    pipeline = RAGPipeline(
+        embedding_client=FakeEmbeddingClient(),
+        retriever=FakeRetriever(retrieved),
+        evidence_evaluator=DummyEvidenceEvaluator(),
+        chat_client=DummyChatClient(),
+        mode="single_call",
+        single_call_rag=single_call_rag,
+    )
+
+    result = pipeline.ask(
+        "¿Cómo se conecta el piano?"
+    )
+
+    assert result.sufficient is True
+    assert result.answer == (
+        "Se conecta mediante una interfaz USB MIDI."
+    )
+
+    assert pipeline.last_generation is generation
+
+    metrics = pipeline.last_metrics
+
+    assert metrics is not None
+    assert metrics.input_tokens == 120
+    assert metrics.total_output_tokens == 18
+    assert metrics.reasoning_output_tokens == 0
+    assert metrics.tokens_per_second == 41.5
+    assert metrics.time_to_first_token_seconds == 0.25
+
+    assert "single_call" in (
+        pipeline.last_stage_execution_times_seconds
+    )

@@ -394,3 +394,32 @@ def test_single_call_selects_all_retrieved_chunks_when_sufficient() -> None:
         "knowledge-001",
         "knowledge-002",
     )
+
+
+def test_single_call_clears_last_generation_when_provider_fails() -> None:
+    class FailingChatClient:
+        def generate(self, messages, *, profile):
+            raise RuntimeError("LM Studio no disponible")
+
+    runner = SingleCallRAG(FailingChatClient())
+
+    results = (
+        SearchResult(
+            chunk=DocumentChunk(
+                id="knowledge-001",
+                text="El piano digital envía eventos MIDI.",
+                source="knowledge.txt",
+                index=0,
+            ),
+            score=1.0,
+        ),
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match="LM Studio no disponible",
+    ):
+        runner.run("¿Cómo se conecta el piano?", results)
+
+    assert runner.last_generation is None
+    assert runner.last_metrics is None
