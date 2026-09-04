@@ -1293,7 +1293,8 @@ def test_summarize_benchmark_execution_includes_metrics() -> None:
         "output=26 | "
         "reasoning=0 | "
         "speed=41.50 tok/s | "
-        "TTFT=0.28 s"
+        "TTFT=0.28 s | "
+        "generation=1.25 s"
     ) in summary
 
     assert "total=2.50 s" in summary
@@ -1309,7 +1310,8 @@ def test_summarize_benchmark_execution_includes_metrics() -> None:
         "output=28 | "
         "reasoning=0 | "
         "speed=42.10 tok/s | "
-        "TTFT=0.32 s"
+        "TTFT=0.32 s | "
+        "generation=1.25 s"
     ) in summary
 
 

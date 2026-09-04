@@ -252,7 +252,8 @@ def summarize_benchmark_execution(
                 f"output={metrics.total_output_tokens} | "
                 f"reasoning={metrics.reasoning_output_tokens} | "
                 f"speed={speed} | "
-                f"TTFT={ttft}"
+                f"TTFT={ttft} | "
+                f"generation={metrics.generation_time_seconds:.2f} s"
             )
         )
 
@@ -278,7 +279,8 @@ def summarize_benchmark_execution(
                 f"output={metrics.total_output_tokens} | "
                 f"reasoning={metrics.reasoning_output_tokens} | "
                 f"speed={speed} | "
-                f"TTFT={ttft}"
+                f"TTFT={ttft} | "
+                f"generation={metrics.generation_time_seconds:.2f} s"
             )
         )
 
