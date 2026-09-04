@@ -388,6 +388,7 @@ class BenchmarkReport:
 
     executions: tuple[BenchmarkExecution, ...]
     evaluations: tuple[bool, ...]
+    mode: str = "two_call"
 
     @property
     def total_cases(self) -> int:
@@ -422,6 +423,8 @@ class BenchmarkReport:
 def build_benchmark_report(
     executions: Sequence[BenchmarkExecution],
     evaluations: Sequence[bool],
+    *,
+    mode: str = "two_call",
 ) -> BenchmarkReport:
     """Construye un reporte global a partir de ejecuciones y evaluaciones."""
 
@@ -433,6 +436,7 @@ def build_benchmark_report(
     return BenchmarkReport(
         executions=tuple(executions),
         evaluations=tuple(evaluations),
+        mode=mode,
     )
 
 
@@ -494,6 +498,7 @@ def run_full_benchmark_with_metrics(
     return build_benchmark_report(
         executions,
         evaluations,
+        mode=getattr(pipeline, "mode", "two_call"),
     )
 
 
@@ -558,20 +563,28 @@ def format_benchmark_report(
 
     lines.append("")
 
-    lines.extend(
-        format_metrics_summary(
-            "Evidence Evaluator",
-            report.evidence_metrics_summary,
+    if report.mode == "single_call":
+        lines.extend(
+            format_metrics_summary(
+                "Single Call",
+                report.answer_metrics_summary,
+            )
         )
-    )
-
-    lines.append("")
-
-    lines.extend(
-        format_metrics_summary(
-            "Answer Generation",
-            report.answer_metrics_summary,
+    else:
+        lines.extend(
+            format_metrics_summary(
+                "Evidence Evaluator",
+                report.evidence_metrics_summary,
+            )
         )
-    )
+
+        lines.append("")
+
+        lines.extend(
+            format_metrics_summary(
+                "Answer Generation",
+                report.answer_metrics_summary,
+            )
+        )
 
     return "\n".join(lines)
