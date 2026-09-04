@@ -178,18 +178,22 @@ def test_rag_pipeline_rejects_invalid_mode() -> None:
         )
 
 
-def test_rag_pipeline_requires_single_call_rag_for_single_call_mode() -> None:
-    with pytest.raises(
-        ValueError,
-        match="single_call_rag es obligatorio",
-    ):
-        RAGPipeline(
-            embedding_client=DummyEmbeddingClient(),
-            retriever=DummyRetriever(),
-            evidence_evaluator=DummyEvidenceEvaluator(),
-            chat_client=DummyChatClient(),
-            mode="single_call",
-        )
+def test_rag_pipeline_builds_single_call_rag_automatically() -> None:
+    from rag_lab.single_call import SingleCallRAG
+
+    chat_client = DummyChatClient()
+
+    pipeline = RAGPipeline(
+        embedding_client=DummyEmbeddingClient(),
+        retriever=DummyRetriever(),
+        evidence_evaluator=DummyEvidenceEvaluator(),
+        chat_client=chat_client,
+        mode="single_call",
+    )
+
+    assert pipeline.mode == "single_call"
+    assert isinstance(pipeline.single_call_rag, SingleCallRAG)
+    assert pipeline.single_call_rag.client is chat_client
 
 
 def test_rag_pipeline_rejects_invalid_top_k() -> None:
@@ -1052,3 +1056,74 @@ def test_rag_pipeline_default_mode_is_single_call() -> None:
     )
 
     assert pipeline.mode == "single_call"
+
+
+def test_rag_pipeline_default_mode_executes_single_call() -> None:
+    retrieved = [
+        make_search_result(
+            "knowledge-001",
+            (
+                "El dispositivo MIDI se conecta al ordenador "
+                "mediante una interfaz USB MIDI."
+            ),
+            0.80,
+        )
+    ]
+
+    generation = GenerationResult(
+        content=(
+            '{"sufficient": true, '
+            '"answer": "Se conecta mediante una interfaz USB MIDI."}'
+        ),
+        reasoning=None,
+        input_tokens=120,
+        total_output_tokens=18,
+        reasoning_output_tokens=0,
+        tokens_per_second=41.5,
+        time_to_first_token_seconds=0.25,
+        generation_time_seconds=1.75,
+    )
+
+    class FakeChatClient:
+        def __init__(self) -> None:
+            self.calls = []
+
+        def generate(self, messages, *, profile):
+            self.calls.append(
+                {
+                    "messages": messages,
+                    "profile": profile,
+                }
+            )
+            return generation
+
+    class FailingEvidenceEvaluator:
+        def evaluate(self, query, results):
+            raise AssertionError(
+                "EvidenceEvaluator no debe ejecutarse "
+                "en el modo single_call por defecto."
+            )
+
+    chat_client = FakeChatClient()
+
+    pipeline = RAGPipeline(
+        embedding_client=FakeEmbeddingClient(),
+        retriever=FakeRetriever(retrieved),
+        evidence_evaluator=FailingEvidenceEvaluator(),
+        chat_client=chat_client,
+    )
+
+    result = pipeline.ask(
+        "¿Cómo se conecta el piano?"
+    )
+
+    assert pipeline.mode == "single_call"
+    assert result.sufficient is True
+    assert result.answer == (
+        "Se conecta mediante una interfaz USB MIDI."
+    )
+
+    assert len(chat_client.calls) == 1
+    assert "single_call" in (
+        pipeline.last_stage_execution_times_seconds
+    )
