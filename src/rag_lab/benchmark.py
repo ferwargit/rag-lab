@@ -276,11 +276,16 @@ def summarize_benchmark_execution(
             else "N/A"
         )
 
-        label = "Single Call" if mode == "single_call" else "Answer"
+        if mode == "single_call":
+            label = "Single Call"
+            separator = " | "
+        else:
+            label = "Answer"
+            separator = "   | "
 
         lines.append(
             (
-                f"     {label:<10} | "
+                f"     {label}{separator}"
                 f"input={metrics.input_tokens} | "
                 f"output={metrics.total_output_tokens} | "
                 f"reasoning={metrics.reasoning_output_tokens} | "
