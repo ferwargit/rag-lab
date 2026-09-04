@@ -36,7 +36,7 @@ class RAGPipeline:
         chat_client: ChatGenerator,
         *,
         top_k: int = 3,
-        mode: Literal["two_call", "single_call"] = "two_call",
+        mode: Literal["two_call", "single_call"] = "single_call",
         single_call_rag: SingleCallRAG | None = None,
 ) -> None:
         if top_k <= 0:
@@ -50,9 +50,7 @@ class RAGPipeline:
             )
 
         if mode == "single_call" and single_call_rag is None:
-            raise ValueError(
-                "single_call_rag es obligatorio cuando mode='single_call'."
-            )
+            single_call_rag = SingleCallRAG(chat_client)
 
         self.embedding_client = embedding_client
         self.retriever = retriever

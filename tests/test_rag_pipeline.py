@@ -117,6 +117,7 @@ def test_rag_pipeline_stores_dependencies() -> None:
         retriever=retriever,
         evidence_evaluator=evidence_evaluator,
         chat_client=chat_client,
+        mode="two_call",
         top_k=3,
     )
 
@@ -130,12 +131,13 @@ def test_rag_pipeline_stores_dependencies() -> None:
     assert pipeline.top_k == 3
 
 
-def test_rag_pipeline_defaults_to_two_call_mode() -> None:
+def test_rag_pipeline_explicit_two_call_mode() -> None:
     pipeline = RAGPipeline(
         embedding_client=DummyEmbeddingClient(),
         retriever=DummyRetriever(),
         evidence_evaluator=DummyEvidenceEvaluator(),
         chat_client=DummyChatClient(),
+        mode="two_call",
     )
 
     assert pipeline.mode == "two_call"
@@ -252,6 +254,7 @@ def test_rag_pipeline_abstains_when_evidence_is_insufficient() -> None:
         evidence_evaluator=evidence_evaluator,
         chat_client=chat_client,
         top_k=3,
+        mode="two_call",
     )
 
     result = pipeline.ask(
@@ -320,6 +323,7 @@ def test_rag_pipeline_selects_evidence_before_generation() -> None:
         retriever=retriever,
         evidence_evaluator=evidence_evaluator,
         chat_client=chat_client,
+        mode="two_call",
     )
 
     result = pipeline.ask(
@@ -396,6 +400,7 @@ def test_rag_pipeline_abstains_when_sufficient_evidence_has_no_selection() -> No
         retriever=retriever,
         evidence_evaluator=evidence_evaluator,
         chat_client=chat_client,
+        mode="two_call",
     )
 
     result = pipeline.ask(
@@ -434,6 +439,7 @@ def test_rag_pipeline_abstains_when_retrieval_returns_no_results() -> None:
         retriever=retriever,
         evidence_evaluator=evidence_evaluator,
         chat_client=chat_client,
+        mode="two_call",
     )
 
     result = pipeline.ask(
@@ -492,6 +498,7 @@ def test_rag_pipeline_abstains_when_generation_returns_empty_content() -> None:
         retriever=retriever,
         evidence_evaluator=evidence_evaluator,
         chat_client=chat_client,
+        mode="two_call",
     )
 
     result = pipeline.ask(
@@ -549,6 +556,7 @@ def test_rag_pipeline_exposes_last_metrics() -> None:
         retriever=retriever,
         evidence_evaluator=evidence_evaluator,
         chat_client=chat_client,
+        mode="two_call",
     )
 
     assert pipeline.last_metrics is None
@@ -609,6 +617,7 @@ def test_rag_pipeline_clears_last_generation_before_each_ask() -> None:
         retriever=retriever,
         evidence_evaluator=evidence_evaluator,
         chat_client=chat_client,
+        mode="two_call",
     )
 
     first_result = pipeline.ask("Primera pregunta")
@@ -667,6 +676,7 @@ def test_rag_pipeline_records_execution_time() -> None:
         evidence_evaluator=FakeEvidenceEvaluator(),
         chat_client=FakeChatClient(),
         top_k=3,
+        mode="two_call",
     )
 
     result = pipeline.ask("Pregunta de prueba")
@@ -729,6 +739,7 @@ def test_rag_pipeline_records_execution_time_for_full_pipeline() -> None:
         evidence_evaluator=FakeEvidenceEvaluator(),
         chat_client=FakeChatClient(),
         top_k=3,
+        mode="two_call",
     )
 
     result = pipeline.ask("Pregunta de prueba")
@@ -785,6 +796,7 @@ def test_rag_pipeline_records_stage_execution_times() -> None:
         retriever=retriever,
         evidence_evaluator=evidence_evaluator,
         chat_client=chat_client,
+        mode="two_call",
     )
 
     result = pipeline.ask(
@@ -1024,3 +1036,19 @@ def test_rag_pipeline_single_call_exposes_last_metrics() -> None:
     assert "single_call" in (
         pipeline.last_stage_execution_times_seconds
     )
+
+
+def test_rag_pipeline_default_mode_is_single_call() -> None:
+    from rag_lab.single_call import SingleCallRAG
+
+    chat_client = DummyChatClient()
+
+    pipeline = RAGPipeline(
+        embedding_client=DummyEmbeddingClient(),
+        retriever=DummyRetriever(),
+        evidence_evaluator=DummyEvidenceEvaluator(),
+        chat_client=chat_client,
+        single_call_rag=SingleCallRAG(chat_client),
+    )
+
+    assert pipeline.mode == "single_call"
