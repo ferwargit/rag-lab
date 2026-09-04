@@ -808,3 +808,98 @@ def test_rag_pipeline_records_stage_execution_times() -> None:
     assert stage_times["retrieval"] >= 0
     assert stage_times["evidence"] >= 0
     assert stage_times["answer_generation"] >= 0
+
+
+def test_rag_pipeline_single_call_mode_uses_single_call_only() -> None:
+    from rag_lab.single_call import SingleCallRAG
+    from rag_lab.single_call import SingleCallResult
+
+    retrieved = [
+        make_search_result(
+            "knowledge-001",
+            (
+                "El dispositivo MIDI se conecta al ordenador "
+                "mediante una interfaz USB MIDI."
+            ),
+            0.80,
+        ),
+        make_search_result(
+            "knowledge-000",
+            "MIDI Laboratory es una aplicación personal desarrollada con Electron.",
+            0.70,
+        ),
+    ]
+
+    embedding_client = FakeEmbeddingClient()
+    retriever = FakeRetriever(retrieved)
+
+    evidence_evaluator = FakeEvidenceEvaluator(
+        decision=None,
+    )
+
+    generation = GenerationResult(
+        content='{"sufficient": true, "answer": "Se conecta mediante USB MIDI."}',
+        reasoning=None,
+        input_tokens=100,
+        total_output_tokens=20,
+        reasoning_output_tokens=0,
+        tokens_per_second=40.0,
+        time_to_first_token_seconds=0.2,
+        generation_time_seconds=1.0,
+    )
+
+    class FakeSingleCall:
+        def __init__(self) -> None:
+            self.calls = []
+
+        def run(self, query, results):
+            self.calls.append((query, list(results)))
+
+            return SingleCallResult(
+                answer="Se conecta mediante USB MIDI.",
+                sufficient=True,
+                selected_chunk_ids=tuple(
+                    result.chunk.id
+                    for result in results
+                ),
+                generation=generation,
+            )
+
+    single_call_rag = FakeSingleCall()
+
+    chat_client = FakeChatClient(
+        generation_result=None,
+    )
+
+    pipeline = RAGPipeline(
+        embedding_client=embedding_client,
+        retriever=retriever,
+        evidence_evaluator=evidence_evaluator,
+        chat_client=chat_client,
+        mode="single_call",
+        single_call_rag=single_call_rag,
+    )
+
+    result = pipeline.ask(
+        "¿Cómo se conecta el piano?"
+    )
+
+    assert result.sufficient is True
+    assert result.answer == "Se conecta mediante USB MIDI."
+
+    assert result.retrieved_chunk_ids == (
+        "knowledge-001",
+        "knowledge-000",
+    )
+
+    assert result.selected_chunk_ids == (
+        "knowledge-001",
+        "knowledge-000",
+    )
+
+    assert len(single_call_rag.calls) == 1
+    assert evidence_evaluator.calls == []
+    assert chat_client.calls == []
+
+    assert pipeline.last_generation is generation
+    assert "single_call" in pipeline.last_stage_execution_times_seconds

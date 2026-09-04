@@ -115,6 +115,54 @@ class RAGPipeline:
                     retrieved_chunk_ids=(),
                     selected_chunk_ids=(),
                 )
+
+            if self.mode == "single_call":
+                assert self.single_call_rag is not None
+
+                stage_start = time.perf_counter()
+
+                result = self.single_call_rag.run(
+                    query,
+                    results,
+                )
+
+                self.last_stage_execution_times_seconds[
+                    "single_call"
+                ] = time.perf_counter() - stage_start
+
+                self.last_generation = result.generation
+
+                if not result.sufficient:
+                    return RAGResult(
+                        answer=ABSTENTION_MESSAGE,
+                        sufficient=False,
+                        retrieved_chunk_ids=tuple(
+                            result.chunk.id
+                            for result in results
+                        ),
+                        selected_chunk_ids=(),
+                    )
+
+                if not result.answer.strip():
+                    return RAGResult(
+                        answer=ABSTENTION_MESSAGE,
+                        sufficient=False,
+                        retrieved_chunk_ids=tuple(
+                            result.chunk.id
+                            for result in results
+                        ),
+                        selected_chunk_ids=(),
+                    )
+
+                return RAGResult(
+                    answer=result.answer,
+                    sufficient=True,
+                    retrieved_chunk_ids=tuple(
+                        result.chunk.id
+                        for result in results
+                    ),
+                    selected_chunk_ids=result.selected_chunk_ids,
+                )
             
             stage_start = time.perf_counter()
 
