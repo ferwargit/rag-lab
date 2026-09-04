@@ -182,6 +182,7 @@ def test_rag_pipeline_abstains_when_evidence_is_insufficient() -> None:
             reasoning_output_tokens=0,
             tokens_per_second=None,
             time_to_first_token_seconds=None,
+            generation_time_seconds=0.0,
         )
     )
 
@@ -250,6 +251,7 @@ def test_rag_pipeline_selects_evidence_before_generation() -> None:
             reasoning_output_tokens=0,
             tokens_per_second=40.0,
             time_to_first_token_seconds=0.2,
+            generation_time_seconds=0.0,
         ),
     )
 
@@ -421,6 +423,7 @@ def test_rag_pipeline_abstains_when_generation_returns_empty_content() -> None:
             reasoning_output_tokens=0,
             tokens_per_second=None,
             time_to_first_token_seconds=None,
+            generation_time_seconds=0.0,
         ),
     )
 
@@ -474,6 +477,7 @@ def test_rag_pipeline_exposes_last_metrics() -> None:
         reasoning_output_tokens=0,
         tokens_per_second=40.0,
         time_to_first_token_seconds=0.2,
+        generation_time_seconds=0.0,
     )
 
     chat_client = FakeChatClient(
@@ -536,6 +540,7 @@ def test_rag_pipeline_clears_last_generation_before_each_ask() -> None:
             reasoning_output_tokens=0,
             tokens_per_second=40.0,
             time_to_first_token_seconds=0.2,
+            generation_time_seconds=0.0,
         )
     )
 
@@ -676,16 +681,59 @@ def test_rag_pipeline_records_execution_time_for_full_pipeline() -> None:
 
 
 def test_rag_pipeline_records_stage_execution_times() -> None:
-    pipeline = RAGPipeline(
-        embedding_client=FakeEmbeddingClient(),
-        retriever=FakeRetriever(),
-        evidence_evaluator=FakeEvidenceEvaluator(),
-        chat_client=FakeChatClient(),
+    from rag_lab.evidence_evaluator import EvidenceDecision
+
+    retrieved = [
+        make_search_result(
+            "knowledge-001",
+            (
+                "El dispositivo MIDI se conecta al ordenador "
+                "mediante una interfaz USB MIDI."
+            ),
+            0.80,
+        )
+    ]
+
+    embedding_client = FakeEmbeddingClient()
+
+    retriever = FakeRetriever(
+        results=retrieved,
     )
 
-    result = pipeline.ask("¿Cómo se conecta el piano por MIDI?")
+    evidence_evaluator = FakeEvidenceEvaluator(
+        EvidenceDecision(
+            sufficient=True,
+            selected_chunk_ids=("knowledge-001",),
+        )
+    )
 
+    chat_client = FakeChatClient(
+        generation_result=GenerationResult(
+            content="Se conecta mediante una interfaz USB MIDI.",
+            reasoning=None,
+            input_tokens=100,
+            total_output_tokens=12,
+            reasoning_output_tokens=0,
+            tokens_per_second=40.0,
+            time_to_first_token_seconds=0.2,
+            generation_time_seconds=0.0,
+        ),
+    )
+
+    pipeline = RAGPipeline(
+        embedding_client=embedding_client,
+        retriever=retriever,
+        evidence_evaluator=evidence_evaluator,
+        chat_client=chat_client,
+    )
+
+    result = pipeline.ask(
+        "¿Cómo se conecta el piano por MIDI?"
+    )
+
+    assert result.sufficient is True
     assert result.answer
+
     assert pipeline.last_execution_time_seconds is not None
     assert pipeline.last_execution_time_seconds > 0
 
