@@ -1127,3 +1127,30 @@ def test_rag_pipeline_default_mode_executes_single_call() -> None:
     assert "single_call" in (
         pipeline.last_stage_execution_times_seconds
     )
+
+
+def test_rag_pipeline_single_call_does_not_require_evidence_evaluator() -> None:
+    chat_client = DummyChatClient()
+
+    pipeline = RAGPipeline(
+        embedding_client=DummyEmbeddingClient(),
+        retriever=DummyRetriever(),
+        chat_client=chat_client,
+    )
+
+    assert pipeline.mode == "single_call"
+    assert pipeline.evidence_evaluator is None
+    assert pipeline.single_call_rag is not None
+
+
+def test_rag_pipeline_two_call_requires_evidence_evaluator() -> None:
+    with pytest.raises(
+        ValueError,
+        match="evidence_evaluator es obligatorio",
+    ):
+        RAGPipeline(
+            embedding_client=DummyEmbeddingClient(),
+            retriever=DummyRetriever(),
+            chat_client=DummyChatClient(),
+            mode="two_call",
+        )

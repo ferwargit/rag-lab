@@ -32,8 +32,8 @@ class RAGPipeline:
         self,
         embedding_client: EmbeddingProvider,
         retriever: RetrieverProvider,
-        evidence_evaluator: EvidenceEvaluatorProvider,
         chat_client: ChatGenerator,
+        evidence_evaluator: EvidenceEvaluatorProvider | None = None,
         *,
         top_k: int = 3,
         mode: Literal["two_call", "single_call"] = "single_call",
@@ -47,6 +47,11 @@ class RAGPipeline:
         if mode not in ("two_call", "single_call"):
             raise ValueError(
                 "mode debe ser 'two_call' o 'single_call'."
+            )
+
+        if mode == "two_call" and evidence_evaluator is None:
+            raise ValueError(
+                "evidence_evaluator es obligatorio cuando mode='two_call'."
             )
 
         if mode == "single_call" and single_call_rag is None:
@@ -163,6 +168,8 @@ class RAGPipeline:
                 )
             
             stage_start = time.perf_counter()
+
+            assert self.evidence_evaluator is not None
 
             decision = self.evidence_evaluator.evaluate(query, results)
 

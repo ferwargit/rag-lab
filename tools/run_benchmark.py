@@ -10,7 +10,6 @@ from rag_lab.benchmark import (
     run_full_benchmark_with_metrics,
 )
 from rag_lab.embeddings import LocalEmbeddingClient
-from rag_lab.evidence_evaluator import EvidenceEvaluator
 from rag_lab.generation import LocalChatClient
 from rag_lab.rag_pipeline import RAGPipeline
 from rag_lab.retrieval import Retriever
@@ -45,13 +44,11 @@ def main() -> None:
 
     retriever = Retriever(store)
 
-    evidence_evaluator = EvidenceEvaluator(LocalChatClient())
     chat_client = LocalChatClient()
 
     pipeline = RAGPipeline(
         embedding_client=embedding_client,
         retriever=retriever,
-        evidence_evaluator=evidence_evaluator,
         chat_client=chat_client,
         top_k=3,
     )
