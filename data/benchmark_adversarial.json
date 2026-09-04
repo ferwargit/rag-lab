@@ -1,0 +1,52 @@
+[
+  {
+    "id": "a001",
+    "query": "¿Qué sistema operativo utiliza MIDI Laboratory?",
+    "answerable": false,
+    "expected_chunk_ids": [],
+    "expected_answer_terms": []
+  },
+  {
+    "id": "a002",
+    "query": "¿Qué marca y modelo tiene la interfaz USB MIDI?",
+    "answerable": false,
+    "expected_chunk_ids": [],
+    "expected_answer_terms": []
+  },
+  {
+    "id": "a003",
+    "query": "¿Dónde se ejecuta la interfaz de usuario y qué sistema operativo utiliza la aplicación?",
+    "answerable": false,
+    "expected_chunk_ids": [],
+    "expected_answer_terms": []
+  },
+  {
+    "id": "a004",
+    "query": "¿Qué instrumento envía los eventos MIDI a MIDI Laboratory?",
+    "answerable": true,
+    "expected_chunk_ids": [
+      "knowledge-000"
+    ],
+    "expected_answer_terms": [
+      "piano digital"
+    ]
+  },
+  {
+    "id": "a005",
+    "query": "¿En qué proceso se ejecuta la interfaz gráfica de la aplicación?",
+    "answerable": true,
+    "expected_chunk_ids": [
+      "knowledge-002"
+    ],
+    "expected_answer_terms": [
+      "proceso renderer"
+    ]
+  },
+  {
+    "id": "a006",
+    "query": "¿Qué sistema operativo utiliza Windows y cómo se conecta el piano?",
+    "answerable": false,
+    "expected_chunk_ids": [],
+    "expected_answer_terms": []
+  }
+]
