@@ -307,3 +307,29 @@ def test_single_call_exposes_last_metrics() -> None:
     assert single_call.last_metrics.tokens_per_second == 40.0
     assert single_call.last_metrics.time_to_first_token_seconds == 0.2
     assert single_call.last_metrics.generation_time_seconds == 0.1
+
+
+def test_single_call_false_does_not_select_chunks() -> None:
+    from rag_lab.single_call import SingleCallRAG
+
+    client = FakeChatClient(
+        """
+        {
+          "sufficient": false,
+          "answer": "No hay información suficiente."
+        }
+        """
+    )
+
+    single_call = SingleCallRAG(client)
+
+    result = single_call.run(
+        "Pregunta de prueba",
+        [make_result()],
+    )
+
+    assert result.sufficient is False
+    assert result.answer == "No hay información suficiente."
+
+    # La decisión insuficiente no debe permitir selección.
+    assert result.selected_chunk_ids == ()
