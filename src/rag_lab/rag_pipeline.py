@@ -1,3 +1,5 @@
+import time
+
 from rag_lab.generation import GenerationResult
 from rag_lab.inference import RAG_ANSWER_PROFILE
 from rag_lab.metrics import (
@@ -44,6 +46,7 @@ class RAGPipeline:
         self.chat_client = chat_client
         self.top_k = top_k
         self.last_generation: GenerationResult | None = None
+        self.last_execution_time_seconds: float | None = None
 
     @property
     def last_metrics(self) -> ExecutionMetrics | None:
@@ -59,90 +62,100 @@ class RAGPipeline:
     def ask(self, query: str) -> RAGResult:
         """Ejecuta una consulta RAG completa."""
 
+        start_time = time.perf_counter()
+
         self.last_generation = None
+        self.last_execution_time_seconds = None
 
-        query_embedding = tuple(
-            self.embedding_client.embed(query)
-        )
-
-        results = self.retriever.search(
-            query_embedding,
-            top_k=self.top_k,
-            score_threshold=None,
-        )
-
-        if not results:
-            return RAGResult(
-                answer=ABSTENTION_MESSAGE,
-                sufficient=False,
-                retrieved_chunk_ids=(),
-                selected_chunk_ids=(),
+        try:
+            query_embedding = tuple(
+                self.embedding_client.embed(query)
             )
-
-        decision = self.evidence_evaluator.evaluate(
-            query,
-            results,
-        )
-
-        if not decision.sufficient:
+            
+            results = self.retriever.search(
+                query_embedding,
+                top_k=self.top_k,
+                score_threshold=None,
+            )
+            
+            if not results:
+                return RAGResult(
+                    answer=ABSTENTION_MESSAGE,
+                    sufficient=False,
+                    retrieved_chunk_ids=(),
+                    selected_chunk_ids=(),
+                )
+            
+            decision = self.evidence_evaluator.evaluate(
+                query,
+                results,
+            )
+            
+            if not decision.sufficient:
+                return RAGResult(
+                    answer=ABSTENTION_MESSAGE,
+                    sufficient=False,
+                    retrieved_chunk_ids=tuple(
+                        result.chunk.id
+                        for result in results
+                    ),
+                    selected_chunk_ids=(),
+                )
+            
+            selected_results = select_results(
+                results,
+                decision.selected_chunk_ids,
+            )
+            
+            if not selected_results:
+                return RAGResult(
+                    answer=ABSTENTION_MESSAGE,
+                    sufficient=False,
+                    retrieved_chunk_ids=tuple(
+                        result.chunk.id
+                        for result in results
+                    ),
+                    selected_chunk_ids=(),
+                )
+            
+            messages = build_rag_messages(
+                query,
+                selected_results,
+            )
+            
+            generation = self.chat_client.generate(
+                messages,
+                profile=RAG_ANSWER_PROFILE,
+            )
+            
+            self.last_generation = generation
+            
+            if not generation.content.strip():
+                return RAGResult(
+                    answer=ABSTENTION_MESSAGE,
+                    sufficient=False,
+                    retrieved_chunk_ids=tuple(
+                        result.chunk.id
+                        for result in results
+                    ),
+                    selected_chunk_ids=(),
+                )
+            
             return RAGResult(
-                answer=ABSTENTION_MESSAGE,
-                sufficient=False,
+                answer=generation.content,
+                sufficient=True,
                 retrieved_chunk_ids=tuple(
                     result.chunk.id
                     for result in results
                 ),
-                selected_chunk_ids=(),
-            )
-
-        selected_results = select_results(
-            results,
-            decision.selected_chunk_ids,
-        )
-
-        if not selected_results:
-            return RAGResult(
-                answer=ABSTENTION_MESSAGE,
-                sufficient=False,
-                retrieved_chunk_ids=tuple(
+                selected_chunk_ids=tuple(
                     result.chunk.id
-                    for result in results
+                    for result in selected_results
                 ),
-                selected_chunk_ids=(),
             )
 
-        messages = build_rag_messages(
-            query,
-            selected_results,
-        )
 
-        generation = self.chat_client.generate(
-            messages,
-            profile=RAG_ANSWER_PROFILE,
-        )
-
-        self.last_generation = generation
-
-        if not generation.content.strip():
-            return RAGResult(
-                answer=ABSTENTION_MESSAGE,
-                sufficient=False,
-                retrieved_chunk_ids=tuple(
-                    result.chunk.id
-                    for result in results
-                ),
-                selected_chunk_ids=(),
+        finally:
+            self.last_execution_time_seconds = (
+                time.perf_counter() - start_time
             )
-
-        return RAGResult(
-            answer=generation.content,
-            sufficient=True,
-            retrieved_chunk_ids=tuple(
-                result.chunk.id
-                for result in results
-            ),
-            selected_chunk_ids=tuple(
-                result.chunk.id
-                for result in selected_results
-            ),
-        )

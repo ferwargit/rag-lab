@@ -563,3 +563,113 @@ def test_rag_pipeline_clears_last_generation_before_each_ask() -> None:
     assert second_result.sufficient is False
     assert pipeline.last_generation is None
     assert pipeline.last_metrics is None
+
+
+def test_rag_pipeline_records_execution_time() -> None:
+    class FakeEmbeddingClient:
+        def embed(self, text: str) -> list[float]:
+            return [1.0]
+
+    class FakeRetriever:
+        def search(
+            self,
+            query_embedding: tuple[float, ...],
+            *,
+            top_k: int,
+            score_threshold: float | None,
+        ):
+            return []
+
+    class FakeEvidenceEvaluator:
+        def evaluate(self, query: str, results):
+            raise AssertionError(
+                "No debería ejecutarse cuando no hay resultados."
+            )
+
+        @property
+        def last_metrics(self):
+            return None
+
+    class FakeChatClient:
+        def generate(self, messages, *, profile):
+            raise AssertionError(
+                "No debería ejecutarse cuando no hay resultados."
+            )
+
+    pipeline = RAGPipeline(
+        embedding_client=FakeEmbeddingClient(),
+        retriever=FakeRetriever(),
+        evidence_evaluator=FakeEvidenceEvaluator(),
+        chat_client=FakeChatClient(),
+        top_k=3,
+    )
+
+    result = pipeline.ask("Pregunta de prueba")
+
+    assert result.sufficient is False
+    assert pipeline.last_execution_time_seconds is not None
+    assert pipeline.last_execution_time_seconds > 0
+
+
+def test_rag_pipeline_records_execution_time_for_full_pipeline() -> None:
+    class FakeEmbeddingClient:
+        def embed(self, text: str) -> list[float]:
+            return [1.0]
+
+    class FakeResult:
+        def __init__(self) -> None:
+            self.chunk = type(
+                "FakeChunk",
+                (),
+                {
+                    "id": "chunk-001",
+                    "source": "test-source",
+                    "text": "Texto de prueba.",
+                },
+            )()
+            self.score = 1.0
+
+    class FakeRetriever:
+        def search(
+            self,
+            query_embedding: tuple[float, ...],
+            *,
+            top_k: int,
+            score_threshold: float | None,
+        ):
+            return [FakeResult()]
+
+    class FakeDecision:
+        sufficient = True
+        selected_chunk_ids = ("chunk-001",)
+
+    class FakeEvidenceEvaluator:
+        def evaluate(self, query: str, results):
+            return FakeDecision()
+
+        @property
+        def last_metrics(self):
+            return None
+
+    class FakeGeneration:
+        content = "Respuesta de prueba."
+
+    class FakeChatClient:
+        def generate(self, messages, *, profile):
+            return FakeGeneration()
+
+    pipeline = RAGPipeline(
+        embedding_client=FakeEmbeddingClient(),
+        retriever=FakeRetriever(),
+        evidence_evaluator=FakeEvidenceEvaluator(),
+        chat_client=FakeChatClient(),
+        top_k=3,
+    )
+
+    result = pipeline.ask("Pregunta de prueba")
+
+    assert result.sufficient is True
+    assert result.answer == "Respuesta de prueba."
+
+    assert pipeline.last_execution_time_seconds is not None
+    assert pipeline.last_execution_time_seconds > 0
