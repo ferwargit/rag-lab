@@ -52,6 +52,7 @@ class SingleCallResult:
 
     answer: str
     sufficient: bool
+    selected_chunk_ids: tuple[str, ...]
     generation: GenerationResult
 
 
@@ -142,8 +143,15 @@ class SingleCallRAG:
                 "El campo 'answer' no puede estar vacío."
             )
 
+        selected_chunk_ids = (
+            tuple(result.chunk.id for result in results)
+            if sufficient
+            else ()
+        )
+
         return SingleCallResult(
             answer=answer,
             sufficient=sufficient,
+            selected_chunk_ids=selected_chunk_ids,
             generation=generation,
         )
