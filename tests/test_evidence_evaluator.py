@@ -25,6 +25,7 @@ class FakeChatClient:
             reasoning_output_tokens=0,
             tokens_per_second=None,
             time_to_first_token_seconds=None,
+            generation_time_seconds=0.0,
         )
 
 
