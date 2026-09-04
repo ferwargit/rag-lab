@@ -358,3 +358,39 @@ def test_single_call_keeps_last_generation_when_json_is_invalid() -> None:
 
     assert runner.last_generation is not None
     assert runner.last_generation.content == '{"sufficient": true,'
+
+
+def test_single_call_selects_all_retrieved_chunks_when_sufficient() -> None:
+    client = FakeChatClient(
+        '{"sufficient": true, "answer": "El piano se conecta mediante USB MIDI."}'
+    )
+    runner = SingleCallRAG(client)
+
+    results = (
+        SearchResult(
+            chunk=DocumentChunk(
+                id="knowledge-001",
+                text="El piano digital envía eventos MIDI.",
+                source="knowledge.txt",
+                index=0,
+            ),
+            score=1.0,
+        ),
+        SearchResult(
+            chunk=DocumentChunk(
+                id="knowledge-002",
+                text="La interfaz corre en el renderer.",
+                source="knowledge.txt",
+                index=1,
+            ),
+            score=0.9,
+        ),
+    )
+
+    result = runner.run("¿Cómo se conecta el piano?", results)
+
+    assert result.sufficient is True
+    assert result.selected_chunk_ids == (
+        "knowledge-001",
+        "knowledge-002",
+    )
