@@ -645,19 +645,28 @@ def test_build_benchmark_execution_allows_missing_answer_metrics() -> None:
         generation_time_seconds=1.25,
     )
 
+    stage_times = (
+        ("embedding", 0.10),
+        ("retrieval", 0.20),
+        ("evidence", 1.00),
+        ("answer_generation", 1.20),
+    )
+
     execution = build_benchmark_execution(
         case,
         result,
         evidence_metrics=evidence_metrics,
         answer_metrics=None,
-        execution_time_seconds=1.50,
+        execution_time_seconds=2.50,
+        stage_execution_times_seconds=stage_times,
     )
 
     assert execution.result.case_id == "q004"
     assert execution.result.sufficient is False
     assert execution.evidence_metrics == evidence_metrics
     assert execution.answer_metrics is None
-    assert execution.execution_time_seconds == 1.50
+    assert execution.stage_execution_times_seconds == stage_times
+    assert execution.execution_time_seconds == 2.50
 
 
 class FakeEvaluatorWithMetrics:
@@ -686,6 +695,13 @@ class FakePipelineWithMetrics:
         self._last_metrics: ExecutionMetrics | None = None
         self.last_execution_time_seconds = 2.50
         self.queries: list[str] = []
+
+        self.last_stage_execution_times_seconds = {
+            "embedding": 0.10,
+            "retrieval": 0.20,
+            "evidence": 1.00,
+            "answer_generation": 1.20,
+        }
 
     @property
     def last_metrics(self) -> ExecutionMetrics | None:
@@ -788,6 +804,13 @@ def test_run_benchmark_with_metrics_captures_metrics_per_query() -> None:
         q001_answer_metrics
     )
 
+    assert executions[0].stage_execution_times_seconds == (
+        ("embedding", 0.10),
+        ("retrieval", 0.20),
+        ("evidence", 1.00),
+        ("answer_generation", 1.20),
+    )
+
     assert executions[1].result.case_id == "q004"
     assert executions[1].evidence_metrics == (
         q004_evidence_metrics
@@ -798,6 +821,13 @@ def test_run_benchmark_with_metrics_captures_metrics_per_query() -> None:
         "Pregunta 1",
         "Pregunta 4",
     ]
+
+    assert executions[1].stage_execution_times_seconds == (
+        ("embedding", 0.10),
+        ("retrieval", 0.20),
+        ("evidence", 1.00),
+        ("answer_generation", 1.20),
+    )
 
 
 def test_summarize_benchmark_execution_reports_pass() -> None:

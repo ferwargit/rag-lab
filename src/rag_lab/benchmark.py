@@ -141,6 +141,7 @@ class BenchmarkExecution:
     evidence_metrics: ExecutionMetrics | None
     answer_metrics: ExecutionMetrics | None
     execution_time_seconds: float | None
+    stage_execution_times_seconds: tuple[tuple[str, float], ...] = ()
 
     @property
     def case_id(self) -> str:
@@ -155,6 +156,7 @@ def build_benchmark_execution(
     evidence_metrics: ExecutionMetrics | None,
     answer_metrics: ExecutionMetrics | None,
     execution_time_seconds: float | None,
+    stage_execution_times_seconds: tuple[tuple[str, float], ...] = (),
 ) -> BenchmarkExecution:
     """Construye el registro completo de una ejecución."""
 
@@ -168,6 +170,7 @@ def build_benchmark_execution(
         evidence_metrics=evidence_metrics,
         answer_metrics=answer_metrics,
         execution_time_seconds=execution_time_seconds,
+        stage_execution_times_seconds=stage_execution_times_seconds,
     )
 
 
@@ -191,6 +194,9 @@ def run_benchmark_with_metrics(
             answer_metrics=pipeline.last_metrics,
             execution_time_seconds=(
                 pipeline.last_execution_time_seconds
+            ),
+            stage_execution_times_seconds=tuple(
+                pipeline.last_stage_execution_times_seconds.items()
             ),
         )
 
