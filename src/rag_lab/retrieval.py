@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
+from rag_lab.core.contracts import VectorStore
 from rag_lab.core.models import EmbeddedChunk, SearchResult
-from rag_lab.vector_store import JsonVectorStore
 
 
 def cosine_similarity(
@@ -34,7 +34,7 @@ def cosine_similarity(
 class Retriever:
     """Realiza búsqueda semántica sobre un VectorStore."""
 
-    def __init__(self, store: JsonVectorStore) -> None:
+    def __init__(self, store: VectorStore) -> None:
         self.store = store
 
     def search(
