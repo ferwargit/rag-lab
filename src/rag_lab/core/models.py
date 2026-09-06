@@ -32,3 +32,11 @@ class RAGResult:
     sufficient: bool
     retrieved_chunk_ids: tuple[str, ...] = ()
     selected_chunk_ids: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class SearchResult:
+    """Resultado de una búsqueda semántica."""
+
+    chunk: EmbeddedChunk
+    score: float

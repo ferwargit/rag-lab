@@ -1,15 +1,7 @@
 from dataclasses import dataclass
 
-from rag_lab.models import EmbeddedChunk
+from rag_lab.core.models import EmbeddedChunk, SearchResult
 from rag_lab.vector_store import JsonVectorStore
-
-
-@dataclass(frozen=True)
-class SearchResult:
-    """Resultado de una búsqueda semántica."""
-
-    chunk: EmbeddedChunk
-    score: float
 
 
 def cosine_similarity(
