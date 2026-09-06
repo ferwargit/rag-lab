@@ -1,32 +1,15 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import TYPE_CHECKING, Protocol
+from typing import Protocol
 
-from rag_lab.core.contracts import EmbeddingProvider, RetrieverProvider
+from rag_lab.core.contracts import (
+    EmbeddingProvider,
+    RetrieverProvider,
+    EvidenceEvaluatorProvider,
+)
 
 from rag_lab.generation import GenerationResult
 from rag_lab.inference import InferenceProfile
-from rag_lab.metrics import ExecutionMetrics
-
-if TYPE_CHECKING:
-    from rag_lab.evidence_evaluator import EvidenceDecision
-
-
-
-class EvidenceEvaluatorProvider(Protocol):
-    """Contrato para evaluar la evidencia recuperada."""
-
-    def evaluate(
-        self,
-        query: str,
-        results: Sequence[SearchResult],
-    ) -> EvidenceDecision:
-        ...
-
-    @property
-    def last_metrics(self) -> ExecutionMetrics | None:
-        ...
 
 
 class ChatGenerator(Protocol):

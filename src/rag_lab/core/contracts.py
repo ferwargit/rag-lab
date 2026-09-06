@@ -1,6 +1,8 @@
 from typing import Protocol
 
-from rag_lab.core.models import EmbeddedChunk, SearchResult
+from collections.abc import Sequence
+
+from rag_lab.core.models import EmbeddedChunk, SearchResult, EvidenceDecision
 
 
 class EmbeddingProvider(Protocol):
@@ -31,4 +33,15 @@ class RetrieverProvider(Protocol):
         top_k: int = 3,
         score_threshold: float | None = None,
     ) -> list[SearchResult]:
+        ...
+
+
+class EvidenceEvaluatorProvider(Protocol):
+    """Contrato para evaluar la evidencia recuperada."""
+
+    def evaluate(
+        self,
+        query: str,
+        results: Sequence[SearchResult],
+    ) -> EvidenceDecision:
         ...
