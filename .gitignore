@@ -1,0 +1,83 @@
+# ============================================================
+# rag-lab — Git ignore
+# ============================================================
+
+# ----- Python virtual environments -----
+.venv/
+venv/
+env/
+ENV/
+
+# ----- Python cache / compiled files -----
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# ----- Test / coverage / type-check caches -----
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.mypy_cache/
+.pyre/
+.ruff_cache/
+
+# ----- Packaging / build artifacts -----
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# ----- Local environment / secrets -----
+.env
+.env.*
+!.env.example
+*.local
+
+# ----- Logs / temporary files -----
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+*.bak
+
+# ----- Jupyter -----
+.ipynb_checkpoints/
+
+# ----- IDE / editor files -----
+.vscode/
+.idea/
+*.code-workspace
+
+# ----- OS files -----
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ----- Local RAG / generated artifacts -----
+# Keep source documents and test fixtures versioned unless
+# they are explicitly generated/local-only.
+*.faiss
+*.index
+*.sqlite
+*.sqlite3
+*.db
+
+# ----- Local model / embedding caches -----
+.cache/
+models/
+embeddings/
+
+# ----- Generated evaluation / benchmark outputs -----
+benchmark-results/
+benchmark_output/
+reports/generated/
+
+# ----- Project-specific local scratch space -----
+scratch/
+tmp/
