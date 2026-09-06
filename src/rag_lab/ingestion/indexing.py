@@ -1,12 +1,12 @@
 from collections.abc import Sequence
 
 from rag_lab.core.models import DocumentChunk, EmbeddedChunk
-from rag_lab.infrastructure.embeddings.lm_studio import LocalEmbeddingClient
+from rag_lab.core.contracts import EmbeddingProvider
 
 
 def embed_chunk(
     chunk: DocumentChunk,
-    client: LocalEmbeddingClient,
+    client: EmbeddingProvider,
 ) -> EmbeddedChunk:
     """Genera un embedding para un DocumentChunk."""
 
@@ -24,7 +24,7 @@ def embed_chunk(
 
 def embed_chunks(
     chunks: Sequence[DocumentChunk],
-    client: LocalEmbeddingClient,
+    client: EmbeddingProvider,
 ) -> list[EmbeddedChunk]:
     """Genera embeddings para una colección de chunks."""
 
