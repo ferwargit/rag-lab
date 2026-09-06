@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 
 from rag_lab.core.models import DocumentChunk, EmbeddedChunk
-from rag_lab.embeddings import LocalEmbeddingClient
+from rag_lab.infrastructure.embeddings.lm_studio import LocalEmbeddingClient
 
 
 def embed_chunk(
