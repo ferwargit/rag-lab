@@ -40,3 +40,11 @@ class SearchResult:
 
     chunk: EmbeddedChunk
     score: float
+
+
+@dataclass(frozen=True)
+class EvidenceDecision:
+    """Representa la decisión semántica sobre la evidencia."""
+
+    sufficient: bool
+    selected_chunk_ids: tuple[str, ...] = ()

@@ -2,7 +2,7 @@ import json
 from collections.abc import Sequence
 from typing import Protocol
 
-from rag_lab.evidence import EvidenceDecision
+from rag_lab.core.models import EvidenceDecision
 from rag_lab.generation import LocalChatClient, GenerationResult
 from rag_lab.retrieval import SearchResult
 from rag_lab.inference import EVIDENCE_PROFILE, InferenceProfile
