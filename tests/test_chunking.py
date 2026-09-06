@@ -1,5 +1,5 @@
-from rag_lab.chunking import chunk_text
-
+from rag_lab.ingestion.chunking import chunk_text
+from rag_lab.ingestion.indexing import embed_chunk, embed_chunks
 
 def test_chunking_returns_document_chunks() -> None:
     text = (
