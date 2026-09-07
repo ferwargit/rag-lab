@@ -3,7 +3,6 @@ from collections.abc import Sequence
 from typing import Protocol
 
 from rag_lab.core.models import EvidenceDecision
-from rag_lab.generation import LocalChatClient
 from rag_lab.core.models import GenerationResult
 from rag_lab.retrieval import SearchResult
 from rag_lab.inference import EVIDENCE_PROFILE, InferenceProfile
@@ -174,11 +173,3 @@ class EvidenceEvaluator:
             sufficient=sufficient,
             selected_chunk_ids=tuple(selected_ids),
         )
-
-
-def create_local_evidence_evaluator() -> EvidenceEvaluator:
-    """Crea un evaluador utilizando Qwen en LM Studio."""
-
-    return EvidenceEvaluator(
-        LocalChatClient()
-    )
