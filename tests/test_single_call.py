@@ -1,6 +1,6 @@
 import pytest
 
-from rag_lab.generation import GenerationResult
+from rag_lab.core.models import GenerationResult
 from rag_lab.inference import InferenceProfile
 from rag_lab.models import EmbeddedChunk, DocumentChunk
 from rag_lab.single_call import SingleCallRAG, SingleCallResult

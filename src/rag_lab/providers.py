@@ -8,7 +8,7 @@ from rag_lab.core.contracts import (
     EvidenceEvaluatorProvider,
 )
 
-from rag_lab.generation import GenerationResult
+from rag_lab.core.models import GenerationResult
 from rag_lab.inference import InferenceProfile
 
 

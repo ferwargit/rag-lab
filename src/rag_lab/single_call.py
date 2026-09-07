@@ -2,7 +2,7 @@ import json
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from rag_lab.generation import GenerationResult
+from rag_lab.core.models import GenerationResult
 from rag_lab.inference import RAG_ANSWER_PROFILE
 from rag_lab.prompting import build_rag_messages
 from rag_lab.retrieval import SearchResult

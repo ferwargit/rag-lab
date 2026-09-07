@@ -4,7 +4,7 @@ from rag_lab.evidence_evaluator import EvidenceEvaluator
 from rag_lab.retrieval import SearchResult
 from rag_lab.models import EmbeddedChunk
 from rag_lab.inference import InferenceProfile
-from rag_lab.generation import GenerationResult
+from rag_lab.core.models import GenerationResult
 
 
 class FakeChatClient:

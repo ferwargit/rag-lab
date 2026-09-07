@@ -12,20 +12,7 @@ from rag_lab.inference import (
 )
 from dataclasses import dataclass
 
-
-@dataclass(frozen=True)
-class GenerationResult:
-    content: str
-    reasoning: str | None
-    input_tokens: int
-    total_output_tokens: int
-    reasoning_output_tokens: int
-    tokens_per_second: float | None
-    time_to_first_token_seconds: float | None
-    generation_time_seconds: float
-    response_id: str | None = None
-    model_instance_id: str | None = None
-
+from rag_lab.core.models import GenerationResult
 
 class GenerationError(RuntimeError):
     """Error durante una generación del modelo local."""

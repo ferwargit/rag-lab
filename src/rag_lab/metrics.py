@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from rag_lab.generation import GenerationResult
+from rag_lab.core.models import GenerationResult
 
 
 @dataclass(frozen=True)

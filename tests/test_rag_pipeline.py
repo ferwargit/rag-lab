@@ -6,7 +6,7 @@ from rag_lab.rag_pipeline import (
     ABSTENTION_MESSAGE,
     RAGPipeline,
 )
-from rag_lab.generation import GenerationResult
+from rag_lab.core.models import GenerationResult
 
 
 class FakeEmbeddingClient:
@@ -219,7 +219,7 @@ def test_abstention_message_is_defined() -> None:
 
 def test_rag_pipeline_abstains_when_evidence_is_insufficient() -> None:
     from rag_lab.evidence_evaluator import EvidenceDecision
-    from rag_lab.generation import GenerationResult
+    from rag_lab.core.models import GenerationResult
 
     retrieved = [
         make_search_result(
@@ -464,7 +464,7 @@ def test_rag_pipeline_abstains_when_retrieval_returns_no_results() -> None:
 
 def test_rag_pipeline_abstains_when_generation_returns_empty_content() -> None:
     from rag_lab.evidence_evaluator import EvidenceDecision
-    from rag_lab.generation import GenerationResult
+    from rag_lab.core.models import GenerationResult
 
     retrieved = [
         make_search_result(
@@ -517,7 +517,7 @@ def test_rag_pipeline_abstains_when_generation_returns_empty_content() -> None:
 
 def test_rag_pipeline_exposes_last_metrics() -> None:
     from rag_lab.evidence_evaluator import EvidenceDecision
-    from rag_lab.generation import GenerationResult
+    from rag_lab.core.models import GenerationResult
 
     retrieved = [
         make_search_result(
@@ -580,7 +580,7 @@ def test_rag_pipeline_exposes_last_metrics() -> None:
 
 def test_rag_pipeline_clears_last_generation_before_each_ask() -> None:
     from rag_lab.evidence_evaluator import EvidenceDecision
-    from rag_lab.generation import GenerationResult
+    from rag_lab.core.models import GenerationResult
 
     retrieved = [
         make_search_result(

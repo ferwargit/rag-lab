@@ -1,6 +1,6 @@
 import time
 
-from rag_lab.generation import GenerationResult
+from rag_lab.core.models import GenerationResult
 from rag_lab.inference import RAG_ANSWER_PROFILE
 from rag_lab.metrics import (
     ExecutionMetrics,

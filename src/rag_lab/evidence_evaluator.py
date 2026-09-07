@@ -3,7 +3,8 @@ from collections.abc import Sequence
 from typing import Protocol
 
 from rag_lab.core.models import EvidenceDecision
-from rag_lab.generation import LocalChatClient, GenerationResult
+from rag_lab.generation import LocalChatClient
+from rag_lab.core.models import GenerationResult
 from rag_lab.retrieval import SearchResult
 from rag_lab.inference import EVIDENCE_PROFILE, InferenceProfile
 from rag_lab.providers import ChatGenerator

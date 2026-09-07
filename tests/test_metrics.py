@@ -3,7 +3,7 @@ from rag_lab.metrics import (
     ExecutionMetrics,
     metrics_from_generation,
 )
-from rag_lab.generation import GenerationResult
+from rag_lab.core.models import GenerationResult
 
 
 def test_execution_metrics_stores_generation_metrics() -> None:
