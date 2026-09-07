@@ -3,15 +3,13 @@ import json
 import urllib.error
 import urllib.request
 
-from rag_lab.inference import (
+from rag_lab.core.inference import (
     DEEP_ANSWER_PROFILE,
     InferenceProfile,
     ModelCapabilities,
     ReasoningMode,
     validate_profile,
 )
-from dataclasses import dataclass
-
 from rag_lab.core.models import GenerationResult
 
 class GenerationError(RuntimeError):
