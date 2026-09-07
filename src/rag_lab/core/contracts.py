@@ -2,7 +2,13 @@ from typing import Protocol
 
 from collections.abc import Sequence
 
-from rag_lab.core.models import EmbeddedChunk, SearchResult, EvidenceDecision
+from rag_lab.core.inference import InferenceProfile
+from rag_lab.core.models import (
+    EmbeddedChunk,
+    SearchResult,
+    EvidenceDecision,
+    GenerationResult,
+)
 
 
 class EmbeddingProvider(Protocol):
@@ -44,4 +50,16 @@ class EvidenceEvaluatorProvider(Protocol):
         query: str,
         results: Sequence[SearchResult],
     ) -> EvidenceDecision:
+        ...
+
+
+class ChatGenerator(Protocol):
+    """Contrato para generar una respuesta."""
+
+    def generate(
+        self,
+        messages: list[dict[str, str]],
+        *,
+        profile: InferenceProfile,
+    ) -> GenerationResult:
         ...
