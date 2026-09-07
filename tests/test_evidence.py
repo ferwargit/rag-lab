@@ -1,4 +1,4 @@
-from rag_lab.evidence import assess_evidence
+from rag_lab.evaluation.evidence import assess_evidence
 from rag_lab.models import EmbeddedChunk
 from rag_lab.retrieval import SearchResult
 
