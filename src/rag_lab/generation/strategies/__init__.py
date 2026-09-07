@@ -1,4 +1,4 @@
-"""Compatibilidad temporal: la estrategia single-call vive en generation.strategies."""
+"""Estrategias de generación."""
 
 from rag_lab.generation.strategies.single_call import (
     SINGLE_CALL_SYSTEM_INSTRUCTION,
