@@ -1,40 +1,13 @@
-from dataclasses import dataclass
+"""Compatibilidad temporal: las métricas viven en rag_lab.evaluation.metrics."""
 
-from rag_lab.core.models import GenerationResult
+from rag_lab.evaluation.metrics import (
+    ComponentExecutionMetrics,
+    ExecutionMetrics,
+    metrics_from_generation,
+)
 
-
-@dataclass(frozen=True)
-class ExecutionMetrics:
-    """Métricas de ejecución de una generación."""
-
-    input_tokens: int
-    total_output_tokens: int
-    reasoning_output_tokens: int
-    tokens_per_second: float | None
-    time_to_first_token_seconds: float | None
-    generation_time_seconds: float
-
-
-def metrics_from_generation(
-    generation: GenerationResult,
-) -> ExecutionMetrics:
-    """Extrae las métricas de ejecución de una generación."""
-
-    return ExecutionMetrics(
-        input_tokens=generation.input_tokens,
-        total_output_tokens=generation.total_output_tokens,
-        reasoning_output_tokens=generation.reasoning_output_tokens,
-        tokens_per_second=generation.tokens_per_second,
-        time_to_first_token_seconds=(
-            generation.time_to_first_token_seconds
-        ),
-        generation_time_seconds=generation.generation_time_seconds,
-    )
-
-
-@dataclass(frozen=True)
-class ComponentExecutionMetrics:
-    """Métricas de ejecución de un componente del pipeline."""
-
-    component: str
-    metrics: ExecutionMetrics
+__all__ = [
+    "ComponentExecutionMetrics",
+    "ExecutionMetrics",
+    "metrics_from_generation",
+]

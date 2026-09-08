@@ -1,15 +1,7 @@
-from collections.abc import Sequence
+"""Compatibilidad temporal: la validación de respuestas vive en evaluación."""
 
+from rag_lab.evaluation.answer_validation import validate_answer_terms
 
-def validate_answer_terms(
-    answer: str,
-    expected_terms: Sequence[str],
-) -> bool:
-    """Comprueba si una respuesta contiene todos los términos esperados."""
-
-    normalized_answer = answer.casefold()
-
-    return all(
-        term.casefold() in normalized_answer
-        for term in expected_terms
-    )
+__all__ = [
+    "validate_answer_terms",
+]

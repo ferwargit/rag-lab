@@ -5,7 +5,10 @@ from dataclasses import dataclass
 from rag_lab.core.contracts import ChatGenerator
 from rag_lab.core.inference import RAG_ANSWER_PROFILE
 from rag_lab.core.models import GenerationResult, SearchResult
-from rag_lab.metrics import ExecutionMetrics, metrics_from_generation
+from rag_lab.evaluation.metrics import (
+    ExecutionMetrics,
+    metrics_from_generation,
+)
 from rag_lab.generation.prompting import build_rag_messages
 
 
