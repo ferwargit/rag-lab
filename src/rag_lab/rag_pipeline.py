@@ -7,7 +7,7 @@ from rag_lab.metrics import (
     metrics_from_generation,
 )
 from rag_lab.models import RAGResult
-from rag_lab.pipeline_utils import select_results
+from rag_lab.pipeline.utils import select_results
 from rag_lab.prompting import build_rag_messages
 from rag_lab.providers import (
     ChatGenerator,

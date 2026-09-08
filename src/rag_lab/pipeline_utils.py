@@ -1,20 +1,7 @@
-from collections.abc import Sequence
+"""Compatibilidad temporal: las utilidades del pipeline viven en rag_lab.pipeline.utils."""
 
-from rag_lab.retrieval import SearchResult
+from rag_lab.pipeline.utils import select_results
 
-
-def select_results(
-    results: Sequence[SearchResult],
-    selected_chunk_ids: Sequence[str],
-) -> list[SearchResult]:
-    """Selecciona resultados recuperados por sus IDs.
-
-    Conserva el orden original de `results`.
-    """
-    selected_ids = set(selected_chunk_ids)
-
-    return [
-        result
-        for result in results
-        if result.chunk.id in selected_ids
-    ]
+__all__ = [
+    "select_results",
+]
