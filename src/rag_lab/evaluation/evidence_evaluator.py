@@ -2,15 +2,14 @@ import json
 from collections.abc import Sequence
 from typing import Protocol
 
-from rag_lab.core.models import EvidenceDecision
-from rag_lab.core.models import GenerationResult
-from rag_lab.retrieval import SearchResult
-from rag_lab.inference import EVIDENCE_PROFILE, InferenceProfile
-from rag_lab.providers import ChatGenerator
+from rag_lab.core.contracts import ChatGenerator
+from rag_lab.core.inference import EVIDENCE_PROFILE, InferenceProfile
+from rag_lab.core.models import EvidenceDecision, GenerationResult
 from rag_lab.evaluation.metrics import (
     ExecutionMetrics,
     metrics_from_generation,
 )
+from rag_lab.retrieval import SearchResult
 
 
 EVIDENCE_SYSTEM_INSTRUCTION = """

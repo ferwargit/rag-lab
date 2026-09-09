@@ -11,7 +11,7 @@ from rag_lab.evaluation.metrics import ExecutionMetrics
 
 
 if TYPE_CHECKING:
-    from rag_lab.rag_pipeline import RAGPipeline
+    from rag_lab.pipeline.rag_pipeline import RAGPipeline
 
 @dataclass(frozen=True)
 class BenchmarkCase:
