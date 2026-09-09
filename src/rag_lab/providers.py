@@ -1,4 +1,4 @@
-from __future__ import annotations
+"""Compatibilidad temporal: los contratos viven en rag_lab.core.contracts."""
 
 from rag_lab.core.contracts import (
     ChatGenerator,
@@ -6,3 +6,10 @@ from rag_lab.core.contracts import (
     EvidenceEvaluatorProvider,
     RetrieverProvider,
 )
+
+__all__ = [
+    "ChatGenerator",
+    "EmbeddingProvider",
+    "EvidenceEvaluatorProvider",
+    "RetrieverProvider",
+]

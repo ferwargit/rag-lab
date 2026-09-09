@@ -1,5 +1,6 @@
-"""Compatibilidad temporal: la recuperación vive en rag_lab.retrieval.retrieval."""
+"""Recuperación semántica."""
 
+from rag_lab.core.models import SearchResult
 from rag_lab.retrieval.retrieval import (
     Retriever,
     cosine_similarity,
@@ -7,5 +8,6 @@ from rag_lab.retrieval.retrieval import (
 
 __all__ = [
     "Retriever",
+    "SearchResult",
     "cosine_similarity",
 ]

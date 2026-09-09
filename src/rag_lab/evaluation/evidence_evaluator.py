@@ -9,7 +9,7 @@ from rag_lab.evaluation.metrics import (
     ExecutionMetrics,
     metrics_from_generation,
 )
-from rag_lab.retrieval import SearchResult
+from rag_lab.core.models import SearchResult
 
 
 EVIDENCE_SYSTEM_INSTRUCTION = """
